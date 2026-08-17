@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>联系我们 — 设计工作室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar scrolled">
+    <a href="index.html" class="logo">STUDIO<span>.</span></a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="category.html">作品</a>
+      <a href="about.html">关于我们</a>
+      <a href="contact.html" class="active">联系我们</a>
+    </div>
+    <button class="menu-toggle"><span></span><span></span><span></span></button>
+  </nav>
+
+  <div class="contact-section">
+    <div class="contact-info">
+      <div class="section-label">联系我们</div>
+      <h1>让我们一起<br>创造点什么</h1>
+      <p>填写右侧表单，或通过以下方式直接联系我们。我们会在 24 小时内回复你。</p>
+      <div class="contact-detail-item">
+        <div class="icon">📧</div>
+        <div>
+          <h4>邮箱</h4>
+          <p id="contactEmail">hello@studio.com</p>
+        </div>
+      </div>
+      <div class="contact-detail-item">
+        <div class="icon">📱</div>
+        <div>
+          <h4>电话</h4>
+          <p id="contactPhone">+86 20 XXXX XXXX</p>
+        </div>
+      </div>
+      <div class="contact-detail-item">
+        <div class="icon">📍</div>
+        <div>
+          <h4>地址</h4>
+          <p id="contactAddress">广州市天河区 XX 路 XX 号创意园 X 栋</p>
+        </div>
+      </div>
+      <div class="contact-detail-item">
+        <div class="icon">⏰</div>
+        <div>
+          <h4>工作时间</h4>
+          <p id="contactHours">周一至周五 9:00 - 18:00</p>
+        </div>
+      </div>
+    </div>
+
+    <form class="contact-form" id="contactForm">
+      <div class="form-group">
+        <label>姓名 *</label>
+        <input type="text" name="name" required placeholder="请输入您的姓名">
+      </div>
+      <div class="form-group">
+        <label>公司名称</label>
+        <input type="text" name="company" placeholder="请输入公司名称">
+      </div>
+      <div class="form-group">
+        <label>邮箱 *</label>
+        <input type="email" name="email" required placeholder="请输入邮箱地址">
+      </div>
+      <div class="form-group">
+        <label>电话</label>
+        <input type="tel" name="phone" placeholder="请输入联系电话">
+      </div>
+      <div class="form-group">
+        <label>感兴趣的分类</label>
+        <select name="category">
+          <option value="">请选择</option>
+          <option value="0">分类一</option>
+          <option value="1">分类二</option>
+          <option value="2">分类三</option>
+          <option value="3">分类四</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>项目描述 *</label>
+        <textarea name="message" required placeholder="请简单描述您的项目需求、预算和时间安排..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">提交咨询</button>
+    </form>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="logo">STUDIO<span>.</span></div><p>以设计驱动创新，为品牌创造有意义的体验。</p></div>
+      <div class="footer-col"><h4>导航</h4><a href="index.html">首页</a><a href="category.html">作品</a><a href="about.html">关于我们</a><a href="contact.html">联系我们</a></div>
+      <div class="footer-col"><h4>作品分类</h4><a href="category.html?cat=0">分类一</a><a href="category.html?cat=1">分类二</a><a href="category.html?cat=2">分类三</a><a href="category.html?cat=3">分类四</a></div>
+      <div class="footer-col"><h4>联系</h4><a href="contact.html">联系我们</a><a href="mailto:hello@studio.com">hello@studio.com</a></div>
+    </div>
+    <div class="footer-bottom"><span id="footerCopyright">© 2024 STUDIO. All rights reserved.</span><span id="footerICP">粤ICP备XXXXXXXX号</span></div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/contact.js"></script>
+</body>
+</html>

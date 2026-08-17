@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后台管理 — 设计工作室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== 登录页 ========== -->
+  <div class="admin-login" id="loginPage">
+    <div class="login-box">
+      <h2>后台管理</h2>
+      <p>请输入管理员密码登录</p>
+      <div class="form-group">
+        <input type="password" id="adminPassword" placeholder="管理员密码" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:8px;font-size:15px;">
+      </div>
+      <button class="submit-btn" onclick="adminLogin()">登录</button>
+      <p style="margin-top:20px;font-size:12px;color:var(--text-light);text-align:center;">默认密码：admin123（请在 js/config.js 中修改）</p>
+    </div>
+  </div>
+
+  <!-- ========== 管理面板 ========== -->
+  <div class="admin-panel" id="adminPanel">
+    <!-- 顶部栏 -->
+    <div class="admin-header">
+      <h1>STUDIO 后台管理</h1>
+      <button onclick="adminLogout()">退出登录</button>
+    </div>
+
+    <div class="admin-sidebar-layout">
+      <!-- 侧边栏 -->
+      <div class="admin-sidebar">
+        <button class="active" onclick="switchTab('projects', this)">作品管理</button>
+        <button onclick="switchTab('hero', this)">首页轮播</button>
+        <button onclick="switchTab('categories', this)">分类设置</button>
+        <button onclick="switchTab('settings', this)">站点设置</button>
+        <button onclick="switchTab('messages', this)">咨询留言</button>
+      </div>
+
+      <!-- 内容区 -->
+      <div class="admin-content">
+
+        <!-- 作品管理 -->
+        <div id="tab-projects">
+          <h2>
+            作品管理
+            <button class="btn-primary" onclick="openProjectModal()">+ 新增作品</button>
+          </h2>
+          <table class="data-table">
+            <thead>
+              <tr><th>封面</th><th>标题</th><th>分类</th><th>客户</th><th>年份</th><th>排序</th><th>操作</th></tr>
+            </thead>
+            <tbody id="projectsTable"></tbody>
+          </table>
+        </div>
+
+        <!-- 首页轮播 -->
+        <div id="tab-hero" style="display:none">
+          <h2>
+            首页轮播图
+            <button class="btn-primary" onclick="openHeroModal()">+ 新增轮播</button>
+          </h2>
+          <table class="data-table">
+            <thead>
+              <tr><th>图片</th><th>标题</th><th>副标题</th><th>排序</th><th>操作</th></tr>
+            </thead>
+            <tbody id="heroTable"></tbody>
+          </table>
+        </div>
+
+        <!-- 分类设置 -->
+        <div id="tab-categories" style="display:none">
+          <h2>作品分类设置</h2>
+          <p style="color:var(--text-gray);margin-bottom:24px;">设置四个作品分类名称，修改后点击保存。</p>
+          <div id="categoryInputs" style="display:grid;gap:16px;max-width:500px;"></div>
+          <button class="btn-primary" style="margin-top:24px;" onclick="saveCategories()">保存分类</button>
+        </div>
+
+        <!-- 站点设置 -->
+        <div id="tab-settings" style="display:none">
+          <h2>站点设置</h2>
+          <p style="color:var(--text-gray);margin-bottom:24px;">修改网站的基本信息，保存后前台自动更新。</p>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">基本信息</h3>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>网站名称（显示在浏览器标签页）</label>
+              <input type="text" id="settingSiteName" placeholder="例如：广州朗格创意咨询">
+            </div>
+            <div class="form-group">
+              <label>Logo 文字（导航栏左上角）</label>
+              <input type="text" id="settingLogoText" placeholder="例如：LANGGE">
+            </div>
+            <div class="form-group">
+              <label>网站描述（SEO用，建议30字以内）</label>
+              <input type="text" id="settingDescription" placeholder="一句话介绍你的公司">
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">联系方式</h3>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>联系邮箱</label>
+              <input type="text" id="settingEmail" placeholder="hello@yourcompany.com">
+            </div>
+            <div class="form-group">
+              <label>联系电话</label>
+              <input type="text" id="settingPhone" placeholder="+86 20 XXXX XXXX">
+            </div>
+            <div class="form-group">
+              <label>公司地址</label>
+              <input type="text" id="settingAddress" placeholder="广州市天河区XX路XX号">
+            </div>
+            <div class="form-group">
+              <label>工作时间</label>
+              <input type="text" id="settingHours" placeholder="周一至周五 9:00 - 18:00">
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">页脚信息</h3>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>版权文字</label>
+              <input type="text" id="settingCopyright" placeholder="© 2024 公司名. All rights reserved.">
+            </div>
+            <div class="form-group">
+              <label>备案号（没有就留空）</label>
+              <input type="text" id="settingICP" placeholder="粤ICP备XXXXXXXX号">
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">关于我们 - 公司介绍</h3>
+          <div style="max-width:800px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>介绍内容（支持 HTML，可图文混排）</label>
+              <textarea id="settingAboutIntro" rows="6" placeholder="支持 &lt;p&gt;段落&lt;/p&gt;、&lt;h2&gt;标题&lt;/h2&gt;、&lt;img src='图片地址'&gt; 等标签"></textarea>
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">关于我们 - 发展历程</h3>
+          <p style="color:var(--text-gray);margin-bottom:16px;font-size:13px;">格式：每行一条，用 | 分隔年份和内容，例如：2018|工作室成立</p>
+          <div class="form-group" style="max-width:800px;margin-bottom:32px;">
+            <textarea id="settingTimeline" rows="5" placeholder="2018|工作室成立&#10;2020|业务拓展&#10;2022|数字体验部门成立"></textarea>
+          </div>
+
+          <button class="btn-primary" onclick="saveSiteSettings()">保存设置</button>
+        </div>
+
+        <!-- 咨询留言 -->
+        <div id="tab-messages" style="display:none">
+          <h2>咨询留言</h2>
+          <table class="data-table">
+            <thead>
+              <tr><th>姓名</th><th>公司</th><th>邮箱</th><th>电话</th><th>服务</th><th>留言</th><th>时间</th></tr>
+            </thead>
+            <tbody id="messagesTable"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 作品编辑弹窗 ========== -->
+  <div class="modal-overlay" id="projectModal">
+    <div class="modal">
+      <h3 id="projectModalTitle">新增作品</h3>
+      <input type="hidden" id="projectId">
+      <div class="form-group">
+        <label>作品标题 *</label>
+        <input type="text" id="projectTitle" placeholder="例如：Oravida 兰维乐">
+      </div>
+      <div class="form-group">
+        <label>副标题/简介</label>
+        <input type="text" id="projectSubtitle" placeholder="一句话描述">
+      </div>
+      <div class="form-group">
+        <label>封面图 URL *</label>
+        <input type="text" id="projectCover" placeholder="https://... 图片链接">
+        <p style="font-size:12px;color:var(--text-light);margin-top:6px;">可使用图床链接，或上传到 Supabase Storage</p>
+      </div>
+      <div class="form-group">
+        <label>客户</label>
+        <input type="text" id="projectClient" placeholder="客户名称">
+      </div>
+      <div class="form-group">
+        <label>年份</label>
+        <input type="text" id="projectYear" placeholder="2024">
+      </div>
+      <div class="form-group">
+        <label>所属分类 *</label>
+        <select id="projectCategory">
+          <option value="0">分类一</option>
+          <option value="1">分类二</option>
+          <option value="2">分类三</option>
+          <option value="3">分类四</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>排序（数字越小越靠前）</label>
+        <input type="number" id="projectSort" value="0">
+      </div>
+      <div class="form-group">
+        <label>详情内容（支持 HTML，类似公众号图文）</label>
+        <textarea id="projectContent" rows="8" placeholder="支持 &lt;h2&gt;标题&lt;/h2&gt;、&lt;p&gt;段落&lt;/p&gt;、&lt;img src='图片地址'&gt;、&lt;blockquote&gt;引用&lt;/blockquote&gt; 等标签"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('projectModal')">取消</button>
+        <button class="btn-primary" onclick="saveProject()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 轮播编辑弹窗 ========== -->
+  <div class="modal-overlay" id="heroModal">
+    <div class="modal">
+      <h3 id="heroModalTitle">新增轮播图</h3>
+      <input type="hidden" id="heroId">
+      <div class="form-group">
+        <label>图片 URL *</label>
+        <input type="text" id="heroImage" placeholder="https://... 大图链接，建议 1920x1080">
+      </div>
+      <div class="form-group">
+        <label>标题 *</label>
+        <input type="text" id="heroTitle" placeholder="大标题">
+      </div>
+      <div class="form-group">
+        <label>副标题</label>
+        <input type="text" id="heroSubtitle" placeholder="描述文字">
+      </div>
+      <div class="form-group">
+        <label>左下角说明文字</label>
+        <input type="text" id="heroCaption" placeholder="可选">
+      </div>
+      <div class="form-group">
+        <label>排序</label>
+        <input type="number" id="heroSort" value="0">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('heroModal')">取消</button>
+        <button class="btn-primary" onclick="saveHero()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

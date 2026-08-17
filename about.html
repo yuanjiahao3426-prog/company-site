@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>关于我们 — 设计工作室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar scrolled">
+    <a href="index.html" class="logo">STUDIO<span>.</span></a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="category.html">作品</a>
+      <a href="about.html" class="active">关于我们</a>
+      <a href="contact.html">联系我们</a>
+    </div>
+    <button class="menu-toggle"><span></span><span></span><span></span></button>
+  </nav>
+
+  <!-- 关于我们 Hero -->
+  <div class="about-hero">
+    <div>
+      <div class="section-label">关于我们</div>
+      <h1>用设计创造<br>有意义的体验</h1>
+      <p id="aboutIntro">我们是一支由设计师、策略师和工程师组成的跨学科团队。我们相信，好的设计能够改变人与产品、人与空间、人与品牌之间的关系。<br><br>自成立以来，我们已为超过 100 个品牌提供了设计服务，涵盖零售、科技、医疗、教育等多个行业。我们的作品多次获得国际设计奖项。</p>
+    </div>
+    <div class="about-img" style="background-image:url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800')"></div>
+  </div>
+
+  <!-- 发展历程 -->
+  <div class="timeline">
+    <div class="section-label">发展历程</div>
+    <h2 class="section-title">我们的成长足迹</h2>
+    <div id="aboutTimeline">
+    <div class="timeline-item">
+      <div class="timeline-year">2018</div>
+      <div class="timeline-content">
+        <h3>工作室成立</h3>
+        <p>在广州创立，最初专注于品牌视觉设计服务。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2020</div>
+      <div class="timeline-content">
+        <h3>业务拓展</h3>
+        <p>新增空间设计和产品设计服务，团队扩充至 20 人。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2022</div>
+      <div class="timeline-content">
+        <h3>数字体验部门成立</h3>
+        <p>组建数字体验设计团队，提供网站、APP 全链路服务。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2024</div>
+      <div class="timeline-content">
+        <h3>服务超 100 个品牌</h3>
+        <p>累计服务客户突破 100 家，多个项目获得国际设计大奖。</p>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- 核心团队 -->
+  <section class="section">
+    <div class="section-label">核心团队</div>
+    <h2 class="section-title">认识我们的团队</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar" style="background-image:url('https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400')"></div>
+        <h3>张设计</h3>
+        <p>创始人 / 创意总监</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" style="background-image:url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400')"></div>
+        <h3>李策略</h3>
+        <p>策略总监</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" style="background-image:url('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400')"></div>
+        <h3>王空间</h3>
+        <p>空间设计总监</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar" style="background-image:url('https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400')"></div>
+        <h3>陈数字</h3>
+        <p>数字体验总监</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 价值观 -->
+  <section class="section" style="background:var(--bg-light)">
+    <div class="section-label">我们的价值观</div>
+    <h2 class="section-title">我们相信什么</h2>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">🎯</div>
+        <h3>以用户为中心</h3>
+        <p>每一个设计决策都从用户需求出发，创造真正有价值的体验。</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">💡</div>
+        <h3>创新驱动</h3>
+        <p>不断探索新的设计方法和技术，保持对行业前沿的敏感度。</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🤝</div>
+        <h3>协作共赢</h3>
+        <p>与客户紧密协作，将商业目标与设计美学完美结合。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA（粒子背景） -->
+  <section class="section cta-section">
+    <canvas id="particles-canvas"></canvas>
+    <div class="section-inner">
+      <h2>想加入我们？</h2>
+      <p>我们一直在寻找有才华、有热情的设计师。</p>
+      <a href="contact.html" class="hero-btn">联系我们</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="logo">STUDIO<span>.</span></div><p>以设计驱动创新，为品牌创造有意义的体验。</p></div>
+      <div class="footer-col"><h4>导航</h4><a href="index.html">首页</a><a href="category.html">作品</a><a href="about.html">关于我们</a><a href="contact.html">联系我们</a></div>
+      <div class="footer-col"><h4>作品分类</h4><a href="category.html?cat=0">分类一</a><a href="category.html?cat=1">分类二</a><a href="category.html?cat=2">分类三</a><a href="category.html?cat=3">分类四</a></div>
+      <div class="footer-col"><h4>联系</h4><a href="contact.html">联系我们</a><a href="mailto:hello@studio.com">hello@studio.com</a></div>
+    </div>
+    <div class="footer-bottom"><span id="footerCopyright">© 2024 STUDIO. All rights reserved.</span><span id="footerICP">粤ICP备XXXXXXXX号</span></div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

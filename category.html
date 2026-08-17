@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作品 — 设计工作室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== 导航栏 ========== -->
+  <nav class="navbar">
+    <a href="index.html" class="logo">STUDIO<span>.</span></a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="category.html" class="active">作品</a>
+      <a href="about.html">关于我们</a>
+      <a href="contact.html">联系我们</a>
+    </div>
+    <button class="menu-toggle">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ========== 页面标题 ========== -->
+  <div class="page-header">
+    <h1>作品</h1>
+    <p>浏览我们在不同领域的设计实践，每一个项目都是一次创新的探索。</p>
+  </div>
+
+  <!-- ========== 分类 Tab ========== -->
+  <div class="category-tabs" id="categoryTabs">
+    <!-- 由 JS 动态渲染 -->
+  </div>
+
+  <!-- ========== 瀑布流作品列表 ========== -->
+  <div class="work-masonry" id="workMasonry">
+    <!-- 由 JS 动态渲染 -->
+  </div>
+
+  <!-- ========== 加载更多 ========== -->
+  <div class="load-more-wrap">
+    <button class="load-more-btn" id="loadMoreBtn" style="display:none;">加载更多</button>
+  </div>
+
+  <!-- ========== 页脚 ========== -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">STUDIO<span>.</span></div>
+        <p>以设计驱动创新，为品牌创造有意义的体验。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <a href="index.html">首页</a>
+        <a href="category.html">作品</a>
+        <a href="about.html">关于我们</a>
+        <a href="contact.html">联系我们</a>
+      </div>
+      <div class="footer-col">
+        <h4>作品分类</h4>
+        <a href="category.html?cat=0">分类一</a>
+        <a href="category.html?cat=1">分类二</a>
+        <a href="category.html?cat=2">分类三</a>
+        <a href="category.html?cat=3">分类四</a>
+      </div>
+      <div class="footer-col">
+        <h4>联系</h4>
+        <a href="contact.html">联系我们</a>
+        <a href="mailto:hello@studio.com">hello@studio.com</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span id="footerCopyright">© 2024 STUDIO. All rights reserved.</span>
+      <span id="footerICP">粤ICP备XXXXXXXX号</span>
+    </div>
+  </footer>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/category.js"></script>
+</body>
+</html>

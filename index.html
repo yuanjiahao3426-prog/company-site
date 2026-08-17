@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设计工作室 — 以设计驱动创新</title>
+  <meta name="description" content="专注于空间设计、产品设计、数字体验与策略咨询的全链路设计工作室。">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== 导航栏 ========== -->
+  <nav class="navbar">
+    <a href="index.html" class="logo">STUDIO<span>.</span></a>
+    <div class="nav-links">
+      <a href="index.html" class="active">首页</a>
+      <a href="category.html">作品</a>
+      <a href="about.html">关于我们</a>
+      <a href="contact.html">联系我们</a>
+    </div>
+    <button class="menu-toggle">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ========== Hero 16:9 轮播 ========== -->
+  <section class="hero">
+    <div class="hero-slides"></div>
+    <button class="hero-arrow prev">‹</button>
+    <button class="hero-arrow next">›</button>
+    <div class="hero-dots"></div>
+  </section>
+
+  <!-- ========== 四分类图文区块（服务概览） ========== -->
+  <section class="section categories-section" id="categories">
+    <div class="section-label">我们的作品</div>
+    <h2 class="section-title">四大领域，全链路设计</h2>
+    <p class="section-desc">从空间到产品，从数字到策略，点击进入对应分类查看详细案例。</p>
+    <div class="categories-grid">
+      <!-- 由 JS 动态渲染 -->
+    </div>
+  </section>
+
+  <!-- ========== 精选作品（横向自动滚动） ========== -->
+  <section class="section featured-work">
+    <div class="section-label">精选作品</div>
+    <h2 class="section-title">我们的最新项目</h2>
+    <p class="section-desc">每一个项目都是一次创新的探索，点击查看详情。</p>
+    <div class="work-scroll-container">
+      <div class="work-scroll-track"></div>
+    </div>
+    <div style="text-align:center; margin-top:44px;">
+      <a href="category.html" class="hero-btn" style="background:var(--text-dark);color:#fff;animation:none;opacity:1;transform:none;">查看全部作品 →</a>
+    </div>
+  </section>
+
+  <!-- ========== 客户 Logo 墙 ========== -->
+  <section class="section clients-section">
+    <div class="section-label">合作客户</div>
+    <h2 class="section-title">信任我们的品牌</h2>
+    <div class="clients-grid">
+      <div class="client-logo">Oravida</div>
+      <div class="client-logo">JMGO</div>
+      <div class="client-logo">小米</div>
+      <div class="client-logo">Campfire</div>
+      <div class="client-logo">Orchid</div>
+      <div class="client-logo">Walmart</div>
+      <div class="client-logo">Gensler</div>
+      <div class="client-logo">frog</div>
+    </div>
+  </section>
+
+  <!-- ========== CTA（动态渐变弥散粒子背景） ========== -->
+  <section class="section cta-section">
+    <canvas id="particles-canvas"></canvas>
+    <div class="section-inner">
+      <h2>有项目想聊聊？</h2>
+      <p>告诉我们你的想法，让我们一起把它变成现实。</p>
+      <a href="contact.html" class="hero-btn">联系我们</a>
+    </div>
+  </section>
+
+  <!-- ========== 页脚 ========== -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">STUDIO<span>.</span></div>
+        <p>以设计驱动创新，为品牌创造有意义的体验。<br>专注于空间、产品、数字与策略的全链路设计。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <a href="index.html">首页</a>
+        <a href="category.html">作品</a>
+        <a href="about.html">关于我们</a>
+        <a href="contact.html">联系我们</a>
+      </div>
+      <div class="footer-col">
+        <h4>作品分类</h4>
+        <a href="category.html?cat=0">分类一</a>
+        <a href="category.html?cat=1">分类二</a>
+        <a href="category.html?cat=2">分类三</a>
+        <a href="category.html?cat=3">分类四</a>
+      </div>
+      <div class="footer-col">
+        <h4>联系</h4>
+        <a href="contact.html">联系我们</a>
+        <a href="mailto:hello@studio.com">hello@studio.com</a>
+        <a href="#">微信公众号</a>
+        <a href="#">小红书</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span id="footerCopyright">© 2024 STUDIO. All rights reserved.</span>
+      <span id="footerICP">粤ICP备XXXXXXXX号</span>
+    </div>
+  </footer>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
