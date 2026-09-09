@@ -323,8 +323,8 @@ const DEFAULT_SITE_SETTINGS = {
   hours: '周一至周五 9:00 - 18:00',
   copyright: '© 2024 STUDIO. All rights reserved.',
   icp: '',
-  about_intro: '',
-  timeline: ''
+  about_intro: '<p>我们是一支由设计师、策略师和工程师组成的跨学科团队。我们相信，好的设计能够改变人与产品、人与空间、人与品牌之间的关系。</p><p>自成立以来，我们已为超过 100 个品牌提供了设计服务，涵盖零售、科技、医疗、教育等多个行业。</p>',
+  timeline: '2018|工作室成立\n2020|业务拓展\n2022|数字体验部门成立\n2024|服务超100个品牌'
 };
 
 async function loadSiteSettings() {

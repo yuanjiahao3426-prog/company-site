@@ -59,7 +59,7 @@ async function loadAllData() {
   await loadProjectsTable();
   await loadHeroTable();
   await loadCategoryInputs();
-  await loadSiteSettings();
+  await loadSettingsForm();
   await loadMessagesTable();
 }
 
@@ -350,21 +350,8 @@ async function loadMessagesTable() {
 }
 
 // ========== 站点设置 ==========
-const DEFAULT_SITE_SETTINGS = {
-  site_name: '设计工作室',
-  logo_text: 'STUDIO',
-  description: '专注于空间设计、产品设计、数字体验与策略咨询的全链路设计工作室。',
-  email: 'hello@studio.com',
-  phone: '+86 20 XXXX XXXX',
-  address: '广州市天河区 XX 路 XX 号创意园 X 栋',
-  hours: '周一至周五 9:00 - 18:00',
-  copyright: '© 2024 STUDIO. All rights reserved.',
-  icp: '',
-  about_intro: '<p>我们是一支由设计师、策略师和工程师组成的跨学科团队。我们相信，好的设计能够改变人与产品、人与空间、人与品牌之间的关系。</p><p>自成立以来，我们已为超过 100 个品牌提供了设计服务，涵盖零售、科技、医疗、教育等多个行业。</p>',
-  timeline: '2018|工作室成立\n2020|业务拓展\n2022|数字体验部门成立\n2024|服务超100个品牌'
-};
-
-async function loadSiteSettings() {
+// 注意：DEFAULT_SITE_SETTINGS 统一定义在 main.js，此处不再重复声明，否则会导致整个 admin.js 崩溃
+async function loadSettingsForm() {
   const sb = getSupabase();
   let settings;
 
