@@ -336,7 +336,8 @@ async function deleteProject(id) {
   if (!confirm('确定删除这个作品吗？')) return;
   const sb = getSupabase();
   if (sb) {
-    await sb.from('projects').delete().eq('id', id);
+    const { error } = await sb.from('projects').delete().eq('id', id);
+    if (error) { alert('删除失败：' + error.message); return; }
   } else {
     let projects = JSON.parse(localStorage.getItem('adminProjects') || 'null') || getSampleProjects();
     projects = projects.filter(p => String(p.id) !== String(id));
@@ -418,11 +419,10 @@ async function saveHero() {
 
   const sb = getSupabase();
   if (sb) {
-    if (id) {
-      await sb.from('hero_slides').update(data).eq('id', id);
-    } else {
-      await sb.from('hero_slides').insert([data]);
-    }
+    const resp = id
+      ? await sb.from('hero_slides').update(data).eq('id', id)
+      : await sb.from('hero_slides').insert([data]);
+    if (resp.error) { alert('保存失败：' + resp.error.message + '\n（若提示权限/RLS，请执行数据库修复 SQL）'); return; }
   } else {
     let slides = JSON.parse(localStorage.getItem('adminHero') || 'null') || getSampleHeroSlides();
     if (id) {
@@ -443,7 +443,8 @@ async function deleteHero(id) {
   if (!confirm('确定删除这张轮播图吗？')) return;
   const sb = getSupabase();
   if (sb) {
-    await sb.from('hero_slides').delete().eq('id', id);
+    const { error } = await sb.from('hero_slides').delete().eq('id', id);
+    if (error) { alert('删除失败：' + error.message); return; }
   } else {
     let slides = JSON.parse(localStorage.getItem('adminHero') || 'null') || getSampleHeroSlides();
     slides = slides.filter(s => String(s.id) !== String(id));
@@ -475,12 +476,14 @@ async function saveCategories() {
 
   const sb = getSupabase();
   if (sb) {
-    const { data: existing } = await sb.from('site_config').select('key').eq('key', 'categories').single();
+    const { data: existing } = await sb.from('site_config').select('key').eq('key', 'categories').maybeSingle();
+    let err;
     if (existing) {
-      await sb.from('site_config').update({ value: categories }).eq('key', 'categories');
+      ({ error: err } = await sb.from('site_config').update({ value: categories }).eq('key', 'categories'));
     } else {
-      await sb.from('site_config').insert([{ key: 'categories', value: categories }]);
+      ({ error: err } = await sb.from('site_config').insert([{ key: 'categories', value: categories }]));
     }
+    if (err) { alert('分类保存失败：' + err.message + '\n（请执行数据库修复 SQL 打开写入权限）'); return; }
   } else {
     localStorage.setItem('adminCategories', JSON.stringify(categories));
   }
@@ -531,7 +534,7 @@ async function loadSettingsForm() {
   let settings;
 
   if (sb) {
-    const { data } = await sb.from('site_config').select('value').eq('key', 'site_settings').single();
+    const { data } = await sb.from('site_config').select('value').eq('key', 'site_settings').maybeSingle();
     settings = data?.value || DEFAULT_SITE_SETTINGS;
   } else {
     settings = JSON.parse(localStorage.getItem('siteSettings') || 'null') || DEFAULT_SITE_SETTINGS;
@@ -574,12 +577,14 @@ async function saveSiteSettings() {
 
   const sb = getSupabase();
   if (sb) {
-    const { data: existing } = await sb.from('site_config').select('key').eq('key', 'site_settings').single();
+    const { data: existing } = await sb.from('site_config').select('key').eq('key', 'site_settings').maybeSingle();
+    let err;
     if (existing) {
-      await sb.from('site_config').update({ value: settings }).eq('key', 'site_settings');
+      ({ error: err } = await sb.from('site_config').update({ value: settings }).eq('key', 'site_settings'));
     } else {
-      await sb.from('site_config').insert([{ key: 'site_settings', value: settings }]);
+      ({ error: err } = await sb.from('site_config').insert([{ key: 'site_settings', value: settings }]));
     }
+    if (err) { alert('站点设置保存失败：' + err.message + '\n（请执行数据库修复 SQL 打开写入权限）'); return; }
   } else {
     localStorage.setItem('siteSettings', JSON.stringify(settings));
   }
