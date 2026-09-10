@@ -342,8 +342,15 @@ async function loadSiteSettings() {
 }
 
 function applySiteSettings(settings) {
-  // Logo 文字
-  document.querySelectorAll('.logo').forEach(el => {
+  // Logo：导航栏优先用上传的图片，无图则用文字；页脚为深色底，始终用文字
+  document.querySelectorAll('.navbar .logo').forEach(el => {
+    if (settings.logo_image) {
+      el.innerHTML = `<img src="${settings.logo_image}" alt="${settings.logo_text || 'logo'}" class="logo-img">`;
+    } else {
+      el.innerHTML = `${settings.logo_text}<span>.</span>`;
+    }
+  });
+  document.querySelectorAll('.footer .logo').forEach(el => {
     el.innerHTML = `${settings.logo_text}<span>.</span>`;
   });
 

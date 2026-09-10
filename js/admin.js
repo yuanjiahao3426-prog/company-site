@@ -32,6 +32,9 @@ function showAdminPanel() {
 
 // 回车登录
 document.addEventListener('DOMContentLoaded', () => {
+  // 初始化图片上传器（容器在 DOM 中一直存在，只是面板隐藏）
+  initAdminUploaders();
+
   if (sessionStorage.getItem('adminLoggedIn') === 'true') {
     isAdmin = true;
     showAdminPanel();
@@ -95,17 +98,64 @@ async function loadProjectsTable() {
   `}).join('');
 }
 
+// ---------- 图片上传器实例 ----------
+let coverUploader = null;   // 作品封面（单图）
+let heroUploader = null;    // 轮播大图（单图）
+let logoUploader = null;    // Logo（单图）
+let uploadersInited = false;
+// 作品内容区块
+let projectBlocks = [];
+let blockUploaders = {};    // blockId -> ImageUploader
+
+function initAdminUploaders() {
+  if (uploadersInited || typeof ImageUploader === 'undefined') return;
+  coverUploader = new ImageUploader(document.getElementById('projectCoverUploader'), { multiple: false, folder: 'projects' });
+  heroUploader = new ImageUploader(document.getElementById('heroImageUploader'), { multiple: false, folder: 'hero' });
+  logoUploader = new ImageUploader(document.getElementById('settingLogoUploader'), { multiple: false, folder: 'logo' });
+  uploadersInited = true;
+}
+
+// ---------- 工具：转义 ----------
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function escapeAttr(str) { return escapeHtml(str); }
+
+function genBlockId() { return 'b' + Date.now() + Math.random().toString(36).slice(2, 6); }
+function newBlock(level) { return { id: genBlockId(), level: level || 'h2', heading: '', text: '', images: [] }; }
+
+// 把已有作品解析成区块（优先结构化 blocks，兼容旧 HTML content）
+function parseProjectBlocks(p) {
+  if (Array.isArray(p.blocks) && p.blocks.length) {
+    return p.blocks.map(b => ({
+      id: genBlockId(),
+      level: b.level || 'h2',
+      heading: b.heading || '',
+      text: b.text || '',
+      images: Array.isArray(b.images) ? b.images : []
+    }));
+  }
+  if (p.content && String(p.content).trim()) {
+    return [{ id: genBlockId(), level: 'html', heading: '', text: p.content, images: [] }];
+  }
+  return [newBlock('h2'), newBlock('h2')];
+}
+
 function openProjectModal() {
   document.getElementById('projectModalTitle').textContent = '新增作品';
   document.getElementById('projectId').value = '';
   document.getElementById('projectTitle').value = '';
   document.getElementById('projectSubtitle').value = '';
-  document.getElementById('projectCover').value = '';
   document.getElementById('projectClient').value = '';
   document.getElementById('projectYear').value = '';
   document.getElementById('projectCategory').value = '0';
   document.getElementById('projectSort').value = '0';
-  document.getElementById('projectContent').value = '';
+  coverUploader.setValue([]);
+  projectBlocks = [newBlock('h2'), newBlock('h2')];
+  blockUploaders = {};
+  renderBlocksEditor();
   document.getElementById('projectModal').classList.add('active');
 }
 
@@ -114,39 +164,157 @@ function editProject(p) {
   document.getElementById('projectId').value = p.id;
   document.getElementById('projectTitle').value = p.title || '';
   document.getElementById('projectSubtitle').value = p.subtitle || '';
-  document.getElementById('projectCover').value = p.cover || '';
+  coverUploader.setValue(p.cover ? [p.cover] : []);
   document.getElementById('projectClient').value = p.client || '';
   document.getElementById('projectYear').value = p.year || '';
   document.getElementById('projectCategory').value = p.category_index !== undefined ? p.category_index : '0';
   document.getElementById('projectSort').value = p.sort_order || 0;
-  document.getElementById('projectContent').value = p.content || '';
+  projectBlocks = parseProjectBlocks(p);
+  blockUploaders = {};
+  renderBlocksEditor();
   document.getElementById('projectModal').classList.add('active');
+}
+
+// ---------- 区块编辑器 ----------
+function blockHTML(b, idx) {
+  const sel = (v) => b.level === v ? 'selected' : '';
+  return `
+    <div class="block-item" data-block-id="${b.id}">
+      <div class="block-head">
+        <span class="block-index">区块 ${idx + 1}</span>
+        <select class="blk-level">
+          <option value="h2" ${sel('h2')}>二级标题（项目背景 / 设计策略 等）</option>
+          <option value="h1" ${sel('h1')}>一级标题</option>
+          <option value="h3" ${sel('h3')}>三级标题</option>
+          <option value="none" ${sel('none')}>无标题（只放正文或图片）</option>
+          <option value="html" ${sel('html')}>旧版 HTML（兼容老内容）</option>
+        </select>
+        <div class="block-tools">
+          <button type="button" onclick="moveBlock('${b.id}',-1)">上移</button>
+          <button type="button" onclick="moveBlock('${b.id}',1)">下移</button>
+          <button type="button" class="block-del" onclick="removeBlock('${b.id}')">删除</button>
+        </div>
+      </div>
+      <input type="text" class="blk-heading" placeholder="标题文字，如：项目背景 / 设计策略 / 空间亮点 / 空间效果（可留空）" value="${escapeAttr(b.heading)}">
+      <textarea class="blk-text" rows="3" placeholder="正文内容，按回车可分段；不需要文字就留空">${escapeAttr(b.text)}</textarea>
+      <div class="blk-images"></div>
+    </div>
+  `;
+}
+
+function renderBlocksEditor() {
+  const container = document.getElementById('blocksEditor');
+  if (!container) return;
+  blockUploaders = {};
+  if (!projectBlocks.length) {
+    container.innerHTML = '<p class="blocks-empty">还没有内容区块，点下方「添加内容区块」开始排版</p>';
+    return;
+  }
+  container.innerHTML = projectBlocks.map((b, idx) => blockHTML(b, idx)).join('');
+  projectBlocks.forEach(b => {
+    const el = container.querySelector('[data-block-id="' + b.id + '"]');
+    if (!el) return;
+    el.querySelector('.blk-level').onchange = e => { b.level = e.target.value; };
+    el.querySelector('.blk-heading').oninput = e => { b.heading = e.target.value; };
+    el.querySelector('.blk-text').oninput = e => { b.text = e.target.value; };
+    const up = new ImageUploader(el.querySelector('.blk-images'), {
+      multiple: true, max: 20, folder: 'projects', value: b.images,
+      onChange: urls => { b.images = urls; }
+    });
+    blockUploaders[b.id] = up;
+  });
+}
+
+function addBlock() {
+  projectBlocks.push(newBlock('h2'));
+  renderBlocksEditor();
+  // 滚动到最新区块
+  const container = document.getElementById('blocksEditor');
+  container.lastElementChild && container.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function removeBlock(id) {
+  projectBlocks = projectBlocks.filter(b => b.id !== id);
+  delete blockUploaders[id];
+  renderBlocksEditor();
+}
+
+function moveBlock(id, dir) {
+  const i = projectBlocks.findIndex(b => b.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= projectBlocks.length) return;
+  const tmp = projectBlocks[i]; projectBlocks[i] = projectBlocks[j]; projectBlocks[j] = tmp;
+  renderBlocksEditor();
+}
+
+function someBlockUploaderBusy() {
+  return Object.values(blockUploaders).some(u => u && u.isBusy && u.isBusy());
+}
+
+// 收集有效区块（标题/正文/图片全空的自动丢弃）
+function collectBlocks() {
+  return projectBlocks.map(b => ({
+    level: b.level || 'h2',
+    heading: (b.heading || '').trim(),
+    text: (b.text || '').trim(),
+    images: (blockUploaders[b.id] ? blockUploaders[b.id].getValue() : b.images) || []
+  })).filter(b => b.heading || b.text || (b.images && b.images.length));
+}
+
+// 把区块渲染成 HTML（同时存一份到 content，兼容旧逻辑与 SEO）
+function blocksToHtml(blocks) {
+  return blocks.map(b => {
+    if (b.level === 'html') return b.text || '';
+    let h = '';
+    if (b.heading && b.level && b.level !== 'none') {
+      h += '<' + b.level + '>' + escapeHtml(b.heading) + '</' + b.level + '>';
+    }
+    if (b.text) {
+      h += b.text.split(/\n+/).filter(Boolean).map(t => '<p>' + escapeHtml(t) + '</p>').join('');
+    }
+    if (b.images && b.images.length) {
+      h += '<div class="pb-gallery count-' + b.images.length + '">' +
+        b.images.map(s => '<figure><img src="' + s + '" alt="" loading="lazy"></figure>').join('') +
+        '</div>';
+    }
+    return h;
+  }).join('');
 }
 
 async function saveProject() {
   const id = document.getElementById('projectId').value;
-  const data = {
-    title: document.getElementById('projectTitle').value,
-    subtitle: document.getElementById('projectSubtitle').value,
-    cover: document.getElementById('projectCover').value,
-    client: document.getElementById('projectClient').value,
-    year: document.getElementById('projectYear').value,
-    category_index: parseInt(document.getElementById('projectCategory').value) || 0,
-    sort_order: parseInt(document.getElementById('projectSort').value) || 0,
-    content: document.getElementById('projectContent').value,
-  };
 
-  if (!data.title || !data.cover) {
-    alert('请填写标题和封面图');
+  if (coverUploader.isBusy() || someBlockUploaderBusy()) {
+    alert('还有图片正在上传，请等待上传完成（缩略图正常显示）后再保存');
     return;
   }
+
+  const blocks = collectBlocks();
+  const coverArr = coverUploader.getValue();
+
+  const data = {
+    title: document.getElementById('projectTitle').value.trim(),
+    subtitle: document.getElementById('projectSubtitle').value.trim(),
+    cover: coverArr[0] || '',
+    client: document.getElementById('projectClient').value.trim(),
+    year: document.getElementById('projectYear').value.trim(),
+    category_index: parseInt(document.getElementById('projectCategory').value) || 0,
+    sort_order: parseInt(document.getElementById('projectSort').value) || 0,
+    blocks: blocks,
+    content: blocksToHtml(blocks)
+  };
+
+  if (!data.title) { alert('请填写作品标题（项目名称）'); return; }
+  if (!data.cover) { alert('请上传作品封面图'); return; }
 
   const sb = getSupabase();
   if (sb) {
     if (id) {
-      await sb.from('projects').update(data).eq('id', id);
+      const { error } = await sb.from('projects').update(data).eq('id', id);
+      if (error) { alert('保存失败：' + error.message); return; }
     } else {
-      await sb.from('projects').insert([data]);
+      const { error } = await sb.from('projects').insert([data]);
+      if (error) { alert('新增失败：' + error.message + '\n如果提示 blocks 字段不存在，请先执行部署说明里的数据库升级 SQL'); return; }
     }
   } else {
     let projects = JSON.parse(localStorage.getItem('adminProjects') || 'null') || getSampleProjects();
@@ -207,7 +375,7 @@ async function loadHeroTable() {
 function openHeroModal() {
   document.getElementById('heroModalTitle').textContent = '新增轮播图';
   document.getElementById('heroId').value = '';
-  document.getElementById('heroImage').value = '';
+  heroUploader.setValue([]);
   document.getElementById('heroTitle').value = '';
   document.getElementById('heroSubtitle').value = '';
   document.getElementById('heroCaption').value = '';
@@ -218,7 +386,7 @@ function openHeroModal() {
 function editHero(s) {
   document.getElementById('heroModalTitle').textContent = '编辑轮播图';
   document.getElementById('heroId').value = s.id;
-  document.getElementById('heroImage').value = s.image || '';
+  heroUploader.setValue(s.image ? [s.image] : []);
   document.getElementById('heroTitle').value = s.title || '';
   document.getElementById('heroSubtitle').value = s.subtitle || '';
   document.getElementById('heroCaption').value = s.caption || '';
@@ -228,8 +396,15 @@ function editHero(s) {
 
 async function saveHero() {
   const id = document.getElementById('heroId').value;
+
+  if (heroUploader.isBusy()) {
+    alert('图片还在上传中，请稍候');
+    return;
+  }
+  const imgArr = heroUploader.getValue();
+
   const data = {
-    image: document.getElementById('heroImage').value,
+    image: imgArr[0] || '',
     title: document.getElementById('heroTitle').value,
     subtitle: document.getElementById('heroSubtitle').value,
     caption: document.getElementById('heroCaption').value,
@@ -237,7 +412,7 @@ async function saveHero() {
   };
 
   if (!data.image || !data.title) {
-    alert('请填写图片和标题');
+    alert('请上传轮播图片并填写标题');
     return;
   }
 
@@ -363,6 +538,7 @@ async function loadSettingsForm() {
   }
 
   document.getElementById('settingSiteName').value = settings.site_name || '';
+  if (logoUploader) logoUploader.setValue(settings.logo_image ? [settings.logo_image] : []);
   document.getElementById('settingLogoText').value = settings.logo_text || '';
   document.getElementById('settingDescription').value = settings.description || '';
   document.getElementById('settingEmail').value = settings.email || '';
@@ -376,8 +552,14 @@ async function loadSettingsForm() {
 }
 
 async function saveSiteSettings() {
+  if (logoUploader && logoUploader.isBusy()) {
+    alert('Logo 还在上传中，请稍候');
+    return;
+  }
+  const logoArr = logoUploader ? logoUploader.getValue() : [];
   const settings = {
     site_name: document.getElementById('settingSiteName').value,
+    logo_image: logoArr[0] || '',
     logo_text: document.getElementById('settingLogoText').value,
     description: document.getElementById('settingDescription').value,
     email: document.getElementById('settingEmail').value,

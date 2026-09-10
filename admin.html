@@ -90,7 +90,11 @@
               <input type="text" id="settingSiteName" placeholder="例如：广州朗格创意咨询">
             </div>
             <div class="form-group">
-              <label>Logo 文字（导航栏左上角）</label>
+              <label>Logo 图片（导航栏左上角，建议上传透明底 PNG，黑色 Logo；不上传则用下方文字）</label>
+              <div id="settingLogoUploader"></div>
+            </div>
+            <div class="form-group">
+              <label>Logo 文字（没有上传 Logo 图片时显示，也用于页脚）</label>
               <input type="text" id="settingLogoText" placeholder="例如：LANGGE">
             </div>
             <div class="form-group">
@@ -165,29 +169,34 @@
 
   <!-- ========== 作品编辑弹窗 ========== -->
   <div class="modal-overlay" id="projectModal">
-    <div class="modal">
+    <div class="modal modal-wide">
       <h3 id="projectModalTitle">新增作品</h3>
       <input type="hidden" id="projectId">
       <div class="form-group">
-        <label>作品标题 *</label>
-        <input type="text" id="projectTitle" placeholder="例如：Oravida 兰维乐">
+        <label>作品标题（项目名称）*</label>
+        <input type="text" id="projectTitle" placeholder="例如：Oravida 兰维乐品牌空间">
       </div>
       <div class="form-group">
-        <label>副标题/简介</label>
-        <input type="text" id="projectSubtitle" placeholder="一句话描述">
+        <label>副标题/简介（列表页显示，可选）</label>
+        <input type="text" id="projectSubtitle" placeholder="一句话描述这个项目">
       </div>
       <div class="form-group">
-        <label>封面图 URL *</label>
-        <input type="text" id="projectCover" placeholder="https://... 图片链接">
-        <p style="font-size:12px;color:var(--text-light);margin-top:6px;">可使用图床链接，或上传到 Supabase Storage</p>
+        <label>封面图 *（列表页和详情顶部大图，上传 1 张）</label>
+        <div id="projectCoverUploader"></div>
       </div>
-      <div class="form-group">
-        <label>客户</label>
-        <input type="text" id="projectClient" placeholder="客户名称">
-      </div>
-      <div class="form-group">
-        <label>年份</label>
-        <input type="text" id="projectYear" placeholder="2024">
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>客户</label>
+          <input type="text" id="projectClient" placeholder="客户名称">
+        </div>
+        <div class="form-group">
+          <label>年份</label>
+          <input type="text" id="projectYear" placeholder="2024">
+        </div>
+        <div class="form-group">
+          <label>排序（越小越靠前）</label>
+          <input type="number" id="projectSort" value="0">
+        </div>
       </div>
       <div class="form-group">
         <label>所属分类 *</label>
@@ -198,17 +207,20 @@
           <option value="3">分类四</option>
         </select>
       </div>
+
+      <!-- ===== 自由排版内容区块编辑器 ===== -->
       <div class="form-group">
-        <label>排序（数字越小越靠前）</label>
-        <input type="number" id="projectSort" value="0">
+        <label class="blocks-editor-label">
+          详情内容（公众号图文，自由排版）
+          <span class="blocks-hint">点下方按钮无限添加区块；每个区块可设标题层级、正文、多张图片，标题/正文/图片都可以留空</span>
+        </label>
+        <div id="blocksEditor" class="blocks-editor"></div>
+        <button type="button" class="btn-secondary btn-add-block" onclick="addBlock()">＋ 添加内容区块</button>
       </div>
-      <div class="form-group">
-        <label>详情内容（支持 HTML，类似公众号图文）</label>
-        <textarea id="projectContent" rows="8" placeholder="支持 &lt;h2&gt;标题&lt;/h2&gt;、&lt;p&gt;段落&lt;/p&gt;、&lt;img src='图片地址'&gt;、&lt;blockquote&gt;引用&lt;/blockquote&gt; 等标签"></textarea>
-      </div>
+
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeModal('projectModal')">取消</button>
-        <button class="btn-primary" onclick="saveProject()">保存</button>
+        <button class="btn-primary" onclick="saveProject()">保存作品</button>
       </div>
     </div>
   </div>
@@ -219,8 +231,8 @@
       <h3 id="heroModalTitle">新增轮播图</h3>
       <input type="hidden" id="heroId">
       <div class="form-group">
-        <label>图片 URL *</label>
-        <input type="text" id="heroImage" placeholder="https://... 大图链接，建议 1920x1080">
+        <label>轮播大图 *（16:9，建议 1920×1080，支持 JPG/PNG/GIF 动图）</label>
+        <div id="heroImageUploader"></div>
       </div>
       <div class="form-group">
         <label>标题 *</label>
@@ -247,6 +259,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
+  <script src="js/uploader.js"></script>
   <script src="js/main.js"></script>
   <script src="js/admin.js"></script>
 </body>
