@@ -324,8 +324,32 @@ const DEFAULT_SITE_SETTINGS = {
   copyright: '© 2024 STUDIO. All rights reserved.',
   icp: '',
   about_intro: '<p>我们是一支由设计师、策略师和工程师组成的跨学科团队。我们相信，好的设计能够改变人与产品、人与空间、人与品牌之间的关系。</p><p>自成立以来，我们已为超过 100 个品牌提供了设计服务，涵盖零售、科技、医疗、教育等多个行业。</p>',
-  timeline: '2018|工作室成立\n2020|业务拓展\n2022|数字体验部门成立\n2024|服务超100个品牌'
+  timeline: '2018|工作室成立\n2020|业务拓展\n2022|数字体验部门成立\n2024|服务超100个品牌',
+  // —— 以下为全站可编辑文案（后台「站点设置」修改）——
+  clients_label: '合作客户',
+  clients_title: '信任我们的品牌',
+  clients: ['Oravida', 'JMGO', '小米', 'Campfire', 'Orchid', 'Walmart', 'Gensler', 'frog'],
+  home_cta_title: '有项目想聊聊？',
+  home_cta_subtitle: '告诉我们你的想法，让我们一起把它变成现实。',
+  about_cta_title: '想加入我们？',
+  about_cta_subtitle: '我们一直在寻找有才华、有热情的设计师。',
+  cta_btn_text: '联系我们',
+  work_title: '作品',
+  work_subtitle: '浏览我们在不同领域的设计实践，每一个项目都是一次创新的探索。',
+  contact_label: '联系我们',
+  contact_title: '让我们一起\n创造点什么',
+  contact_subtitle: '填写右侧表单，或通过以下方式直接联系我们。我们会在 24 小时内回复你。',
+  footer_about: '以设计驱动创新，为品牌创造有意义的体验。',
+  social_wechat: '微信公众号',
+  social_xhs: '小红书'
 };
+
+// 文本转义 + 换行转 <br>（后台填写的纯文本安全渲染）
+function escText(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+}
 
 async function loadSiteSettings() {
   const sb = getSupabase();
@@ -412,6 +436,98 @@ function applySiteSettings(settings) {
       `;
     }).join('');
   }
+
+  // ===== 全站可编辑文案（按 id 填充，页面没有该元素就跳过）=====
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.textContent = val;
+  };
+  const setHTML = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.innerHTML = escText(val);
+  };
+
+  // 合作客户区
+  setText('clientsLabel', settings.clients_label);
+  setText('clientsTitle', settings.clients_title);
+  const clientsGrid = document.getElementById('clientsGrid');
+  if (clientsGrid) {
+    const list = Array.isArray(settings.clients) ? settings.clients : [];
+    clientsGrid.innerHTML = list.filter(c => String(c).trim())
+      .map(c => `<div class="client-logo">${escText(c)}</div>`).join('');
+  }
+
+  // 首页 CTA
+  setText('homeCtaTitle', settings.home_cta_title);
+  setText('homeCtaSubtitle', settings.home_cta_subtitle);
+  // 关于页 CTA
+  setText('aboutCtaTitle', settings.about_cta_title);
+  setText('aboutCtaSubtitle', settings.about_cta_subtitle);
+  // 作品页头
+  setText('workPageTitle', settings.work_title);
+  setText('workPageSubtitle', settings.work_subtitle);
+  // 联系页头（主标题支持换行）
+  setText('contactPageLabel', settings.contact_label);
+  setHTML('contactPageTitle', settings.contact_title);
+  setText('contactPageSubtitle', settings.contact_subtitle);
+  // 所有 CTA 按钮文字
+  if (settings.cta_btn_text) {
+    document.querySelectorAll('.cta-section .hero-btn, .cta-section .cta-btn').forEach(b => b.textContent = settings.cta_btn_text);
+  }
+}
+
+// ---------- 统一渲染页脚（全站一致，内容后台可改）----------
+async function renderFooter(settings) {
+  const foot = document.getElementById('siteFooter');
+  if (!foot) return;
+  const s = settings || await loadSiteSettings();
+  const categories = await loadCategories();
+  const catLinks = categories.map((n, i) => `<a href="category.html?cat=${i}">${escText(n)}</a>`).join('');
+  const social = [
+    s.email ? `<a href="mailto:${s.email}">${escText(s.email)}</a>` : '',
+    s.social_wechat ? `<a href="#">${escText(s.social_wechat)}</a>` : '',
+    s.social_xhs ? `<a href="#">${escText(s.social_xhs)}</a>` : ''
+  ].filter(Boolean).join('');
+  foot.innerHTML = `
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">${escText(s.logo_text)}<span>.</span></div>
+        <p>${escText(s.footer_about)}</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <a href="index.html">首页</a>
+        <a href="category.html">作品</a>
+        <a href="about.html">关于我们</a>
+        <a href="contact.html">联系我们</a>
+      </div>
+      <div class="footer-col">
+        <h4>作品分类</h4>
+        ${catLinks}
+      </div>
+      <div class="footer-col">
+        <h4>联系</h4>
+        <a href="contact.html">联系我们</a>
+        ${social}
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span id="footerCopyright">${escText(s.copyright)}</span>
+      <span id="footerICP">${escText(s.icp || '')}</span>
+    </div>`;
+  if (!s.icp) { const i = foot.querySelector('#footerICP'); if (i) i.style.display = 'none'; }
+}
+
+// ---------- 联系表单分类下拉动态化 ----------
+async function renderContactCategoryOptions() {
+  const sel = document.querySelector('#contactForm select[name=category]');
+  if (!sel) return;
+  const categories = await loadCategories();
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">请选择</option>` +
+    categories.map((n, i) => `<option value="${i}">${escText(n)}</option>`).join('') +
+    `<option value="other">其他</option>`;
+  sel.value = cur;
 }
 
 // ---------- 页面初始化 ----------
@@ -421,6 +537,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 加载并应用站点设置
   const settings = await loadSiteSettings();
   applySiteSettings(settings);
+  renderFooter(settings);
+  renderContactCategoryOptions();
 
   renderHero();
   renderCategories();

@@ -21,9 +21,9 @@
 
   <div class="contact-section">
     <div class="contact-info">
-      <div class="section-label">联系我们</div>
-      <h1>让我们一起<br>创造点什么</h1>
-      <p>填写右侧表单，或通过以下方式直接联系我们。我们会在 24 小时内回复你。</p>
+      <div class="section-label" id="contactPageLabel">联系我们</div>
+      <h1 id="contactPageTitle">让我们一起<br>创造点什么</h1>
+      <p id="contactPageSubtitle">填写右侧表单，或通过以下方式直接联系我们。我们会在 24 小时内回复你。</p>
       <div class="contact-detail-item">
         <div class="icon">📧</div>
         <div>
@@ -75,11 +75,6 @@
         <label>感兴趣的分类</label>
         <select name="category">
           <option value="">请选择</option>
-          <option value="0">分类一</option>
-          <option value="1">分类二</option>
-          <option value="2">分类三</option>
-          <option value="3">分类四</option>
-          <option value="other">其他</option>
         </select>
       </div>
       <div class="form-group">
@@ -90,15 +85,8 @@
     </form>
   </div>
 
-  <footer class="footer">
-    <div class="footer-grid">
-      <div class="footer-brand"><div class="logo">STUDIO<span>.</span></div><p>以设计驱动创新，为品牌创造有意义的体验。</p></div>
-      <div class="footer-col"><h4>导航</h4><a href="index.html">首页</a><a href="category.html">作品</a><a href="about.html">关于我们</a><a href="contact.html">联系我们</a></div>
-      <div class="footer-col"><h4>作品分类</h4><a href="category.html?cat=0">分类一</a><a href="category.html?cat=1">分类二</a><a href="category.html?cat=2">分类三</a><a href="category.html?cat=3">分类四</a></div>
-      <div class="footer-col"><h4>联系</h4><a href="contact.html">联系我们</a><a href="mailto:hello@studio.com">hello@studio.com</a></div>
-    </div>
-    <div class="footer-bottom"><span id="footerCopyright">© 2024 STUDIO. All rights reserved.</span><span id="footerICP">粤ICP备XXXXXXXX号</span></div>
-  </footer>
+  <!-- 页脚（由 main.js 统一渲染） -->
+  <footer class="footer" id="siteFooter"></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>

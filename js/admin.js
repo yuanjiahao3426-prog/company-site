@@ -540,18 +540,69 @@ async function loadSettingsForm() {
     settings = JSON.parse(localStorage.getItem('siteSettings') || 'null') || DEFAULT_SITE_SETTINGS;
   }
 
-  document.getElementById('settingSiteName').value = settings.site_name || '';
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+
+  setVal('settingSiteName', settings.site_name);
   if (logoUploader) logoUploader.setValue(settings.logo_image ? [settings.logo_image] : []);
-  document.getElementById('settingLogoText').value = settings.logo_text || '';
-  document.getElementById('settingDescription').value = settings.description || '';
-  document.getElementById('settingEmail').value = settings.email || '';
-  document.getElementById('settingPhone').value = settings.phone || '';
-  document.getElementById('settingAddress').value = settings.address || '';
-  document.getElementById('settingHours').value = settings.hours || '';
-  document.getElementById('settingCopyright').value = settings.copyright || '';
-  document.getElementById('settingICP').value = settings.icp || '';
-  document.getElementById('settingAboutIntro').value = settings.about_intro || '';
-  document.getElementById('settingTimeline').value = settings.timeline || '';
+  setVal('settingLogoText', settings.logo_text);
+  setVal('settingDescription', settings.description);
+  setVal('settingEmail', settings.email);
+  setVal('settingPhone', settings.phone);
+  setVal('settingAddress', settings.address);
+  setVal('settingHours', settings.hours);
+  setVal('settingCopyright', settings.copyright);
+  setVal('settingICP', settings.icp);
+  setVal('settingAboutIntro', settings.about_intro);
+  setVal('settingTimeline', settings.timeline);
+  // 新增全站文案
+  setVal('settingFooterAbout', settings.footer_about);
+  setVal('settingSocialWechat', settings.social_wechat);
+  setVal('settingSocialXhs', settings.social_xhs);
+  setVal('settingClientsLabel', settings.clients_label);
+  setVal('settingClientsTitle', settings.clients_title);
+  setVal('settingHomeCtaTitle', settings.home_cta_title);
+  setVal('settingHomeCtaSubtitle', settings.home_cta_subtitle);
+  setVal('settingWorkTitle', settings.work_title);
+  setVal('settingWorkSubtitle', settings.work_subtitle);
+  setVal('settingAboutCtaTitle', settings.about_cta_title);
+  setVal('settingAboutCtaSubtitle', settings.about_cta_subtitle);
+  setVal('settingContactLabel', settings.contact_label);
+  setVal('settingContactTitle', settings.contact_title);
+  setVal('settingContactSubtitle', settings.contact_subtitle);
+  // 客户列表
+  renderClientsEditor(Array.isArray(settings.clients) ? settings.clients : []);
+}
+
+// ---------- 合作客户动态行 ----------
+function renderClientsEditor(list) {
+  const box = document.getElementById('clientsEditor');
+  if (!box) return;
+  const items = (list && list.length ? list : ['']);
+  box.innerHTML = items.map((c, i) => `
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" class="client-row" value="${String(c).replace(/"/g, '&quot;')}" placeholder="客户名称 ${i + 1}" style="flex:1;">
+      <button type="button" class="btn-delete" onclick="removeClientRow(this)">删除</button>
+    </div>`).join('');
+}
+function addClientRow() {
+  const box = document.getElementById('clientsEditor');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;align-items:center;';
+  div.innerHTML = `<input type="text" class="client-row" placeholder="客户名称" style="flex:1;"><button type="button" class="btn-delete">删除</button>`;
+  div.querySelector('.btn-delete').onclick = () => div.remove();
+  box.appendChild(div);
+  div.querySelector('input').focus();
+}
+function removeClientRow(btn) {
+  const box = document.getElementById('clientsEditor');
+  btn.parentElement.remove();
+  if (!box.querySelectorAll('.client-row').length) addClientRow();
+}
+function collectClients() {
+  return Array.from(document.querySelectorAll('#clientsEditor .client-row'))
+    .map(i => i.value.trim()).filter(Boolean);
 }
 
 async function saveSiteSettings() {
@@ -559,20 +610,37 @@ async function saveSiteSettings() {
     alert('Logo 还在上传中，请稍候');
     return;
   }
+  const v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
   const logoArr = logoUploader ? logoUploader.getValue() : [];
   const settings = {
-    site_name: document.getElementById('settingSiteName').value,
+    site_name: v('settingSiteName'),
     logo_image: logoArr[0] || '',
-    logo_text: document.getElementById('settingLogoText').value,
-    description: document.getElementById('settingDescription').value,
-    email: document.getElementById('settingEmail').value,
-    phone: document.getElementById('settingPhone').value,
-    address: document.getElementById('settingAddress').value,
-    hours: document.getElementById('settingHours').value,
-    copyright: document.getElementById('settingCopyright').value,
-    icp: document.getElementById('settingICP').value,
-    about_intro: document.getElementById('settingAboutIntro').value,
-    timeline: document.getElementById('settingTimeline').value,
+    logo_text: v('settingLogoText'),
+    description: v('settingDescription'),
+    email: v('settingEmail'),
+    phone: v('settingPhone'),
+    address: v('settingAddress'),
+    hours: v('settingHours'),
+    copyright: v('settingCopyright'),
+    icp: v('settingICP'),
+    about_intro: v('settingAboutIntro'),
+    timeline: v('settingTimeline'),
+    // 全站文案
+    footer_about: v('settingFooterAbout'),
+    social_wechat: v('settingSocialWechat'),
+    social_xhs: v('settingSocialXhs'),
+    clients_label: v('settingClientsLabel'),
+    clients_title: v('settingClientsTitle'),
+    clients: collectClients(),
+    home_cta_title: v('settingHomeCtaTitle'),
+    home_cta_subtitle: v('settingHomeCtaSubtitle'),
+    work_title: v('settingWorkTitle'),
+    work_subtitle: v('settingWorkSubtitle'),
+    about_cta_title: v('settingAboutCtaTitle'),
+    about_cta_subtitle: v('settingAboutCtaSubtitle'),
+    contact_label: v('settingContactLabel'),
+    contact_title: v('settingContactTitle'),
+    contact_subtitle: v('settingContactSubtitle'),
   };
 
   const sb = getSupabase();

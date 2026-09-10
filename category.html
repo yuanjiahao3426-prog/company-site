@@ -24,8 +24,8 @@
 
   <!-- ========== 页面标题 ========== -->
   <div class="page-header">
-    <h1>作品</h1>
-    <p>浏览我们在不同领域的设计实践，每一个项目都是一次创新的探索。</p>
+    <h1 id="workPageTitle">作品</h1>
+    <p id="workPageSubtitle">浏览我们在不同领域的设计实践，每一个项目都是一次创新的探索。</p>
   </div>
 
   <!-- ========== 分类 Tab ========== -->
@@ -43,38 +43,8 @@
     <button class="load-more-btn" id="loadMoreBtn" style="display:none;">加载更多</button>
   </div>
 
-  <!-- ========== 页脚 ========== -->
-  <footer class="footer">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <div class="logo">STUDIO<span>.</span></div>
-        <p>以设计驱动创新，为品牌创造有意义的体验。</p>
-      </div>
-      <div class="footer-col">
-        <h4>导航</h4>
-        <a href="index.html">首页</a>
-        <a href="category.html">作品</a>
-        <a href="about.html">关于我们</a>
-        <a href="contact.html">联系我们</a>
-      </div>
-      <div class="footer-col">
-        <h4>作品分类</h4>
-        <a href="category.html?cat=0">分类一</a>
-        <a href="category.html?cat=1">分类二</a>
-        <a href="category.html?cat=2">分类三</a>
-        <a href="category.html?cat=3">分类四</a>
-      </div>
-      <div class="footer-col">
-        <h4>联系</h4>
-        <a href="contact.html">联系我们</a>
-        <a href="mailto:hello@studio.com">hello@studio.com</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span id="footerCopyright">© 2024 STUDIO. All rights reserved.</span>
-      <span id="footerICP">粤ICP备XXXXXXXX号</span>
-    </div>
-  </footer>
+  <!-- ========== 页脚（由 main.js 统一渲染） ========== -->
+  <footer class="footer" id="siteFooter"></footer>
 
   <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

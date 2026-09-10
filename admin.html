@@ -126,12 +126,92 @@
           <h3 style="margin-bottom:16px;font-size:16px;">页脚信息</h3>
           <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
             <div class="form-group">
+              <label>页脚品牌简介（Logo 下方那段话）</label>
+              <textarea id="settingFooterAbout" rows="2" placeholder="以设计驱动创新，为品牌创造有意义的体验。"></textarea>
+            </div>
+            <div class="form-group">
+              <label>页脚「联系」里的微信名称（留空则不显示）</label>
+              <input type="text" id="settingSocialWechat" placeholder="例如：微信公众号 / 朗格设计">
+            </div>
+            <div class="form-group">
+              <label>页脚「联系」里的小红书名称（留空则不显示）</label>
+              <input type="text" id="settingSocialXhs" placeholder="例如：小红书 / 朗格空间设计">
+            </div>
+            <div class="form-group">
               <label>版权文字</label>
               <input type="text" id="settingCopyright" placeholder="© 2024 公司名. All rights reserved.">
             </div>
             <div class="form-group">
               <label>备案号（没有就留空）</label>
               <input type="text" id="settingICP" placeholder="粤ICP备XXXXXXXX号">
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">首页 - 合作客户区</h3>
+          <p style="color:var(--text-gray);margin-bottom:12px;font-size:13px;">客户名称以文字形式横向排列，点「+ 添加客户」增加，数量不限。</p>
+          <div style="max-width:600px;margin-bottom:12px;">
+            <div class="form-group">
+              <label>小标题（红色那行）</label>
+              <input type="text" id="settingClientsLabel" placeholder="合作客户">
+            </div>
+            <div class="form-group">
+              <label>大标题</label>
+              <input type="text" id="settingClientsTitle" placeholder="信任我们的品牌">
+            </div>
+            <div id="clientsEditor" style="display:grid;gap:8px;margin-bottom:8px;"></div>
+            <button type="button" class="btn-edit" onclick="addClientRow()">+ 添加客户</button>
+          </div>
+
+          <h3 style="margin:28px 0 16px;font-size:16px;">首页 - 底部行动区（粒子背景那块）</h3>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>大标题</label>
+              <input type="text" id="settingHomeCtaTitle" placeholder="有项目想聊聊？">
+            </div>
+            <div class="form-group">
+              <label>副标题</label>
+              <input type="text" id="settingHomeCtaSubtitle" placeholder="告诉我们你的想法，让我们一起把它变成现实。">
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">作品页 - 顶部标题</h3>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>大标题</label>
+              <input type="text" id="settingWorkTitle" placeholder="作品">
+            </div>
+            <div class="form-group">
+              <label>副标题</label>
+              <input type="text" id="settingWorkSubtitle" placeholder="浏览我们在不同领域的设计实践……">
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">关于我们 - 底部行动区（粒子背景那块）</h3>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>大标题</label>
+              <input type="text" id="settingAboutCtaTitle" placeholder="想加入我们？">
+            </div>
+            <div class="form-group">
+              <label>副标题</label>
+              <input type="text" id="settingAboutCtaSubtitle" placeholder="我们一直在寻找有才华、有热情的设计师。">
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">联系我们页 - 顶部标题</h3>
+          <p style="color:var(--text-gray);margin-bottom:12px;font-size:13px;">主标题如需换行，直接在输入框里按回车即可。</p>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>小标题（红色那行）</label>
+              <input type="text" id="settingContactLabel" placeholder="联系我们">
+            </div>
+            <div class="form-group">
+              <label>主标题（可回车换行）</label>
+              <textarea id="settingContactTitle" rows="2" placeholder="让我们一起&#10;创造点什么"></textarea>
+            </div>
+            <div class="form-group">
+              <label>副标题</label>
+              <textarea id="settingContactSubtitle" rows="2" placeholder="填写右侧表单，或通过以下方式直接联系我们……"></textarea>
             </div>
           </div>
 

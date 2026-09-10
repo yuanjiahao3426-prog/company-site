@@ -56,64 +56,23 @@
 
   <!-- ========== 客户 Logo 墙 ========== -->
   <section class="section clients-section">
-    <div class="section-label">合作客户</div>
-    <h2 class="section-title">信任我们的品牌</h2>
-    <div class="clients-grid">
-      <div class="client-logo">Oravida</div>
-      <div class="client-logo">JMGO</div>
-      <div class="client-logo">小米</div>
-      <div class="client-logo">Campfire</div>
-      <div class="client-logo">Orchid</div>
-      <div class="client-logo">Walmart</div>
-      <div class="client-logo">Gensler</div>
-      <div class="client-logo">frog</div>
-    </div>
+    <div class="section-label" id="clientsLabel">合作客户</div>
+    <h2 class="section-title" id="clientsTitle">信任我们的品牌</h2>
+    <div class="clients-grid" id="clientsGrid"></div>
   </section>
 
   <!-- ========== CTA（动态渐变弥散粒子背景） ========== -->
   <section class="section cta-section">
     <canvas id="particles-canvas"></canvas>
     <div class="section-inner">
-      <h2>有项目想聊聊？</h2>
-      <p>告诉我们你的想法，让我们一起把它变成现实。</p>
+      <h2 id="homeCtaTitle">有项目想聊聊？</h2>
+      <p id="homeCtaSubtitle">告诉我们你的想法，让我们一起把它变成现实。</p>
       <a href="contact.html" class="hero-btn">联系我们</a>
     </div>
   </section>
 
-  <!-- ========== 页脚 ========== -->
-  <footer class="footer">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <div class="logo">STUDIO<span>.</span></div>
-        <p>以设计驱动创新，为品牌创造有意义的体验。<br>专注于空间、产品、数字与策略的全链路设计。</p>
-      </div>
-      <div class="footer-col">
-        <h4>导航</h4>
-        <a href="index.html">首页</a>
-        <a href="category.html">作品</a>
-        <a href="about.html">关于我们</a>
-        <a href="contact.html">联系我们</a>
-      </div>
-      <div class="footer-col">
-        <h4>作品分类</h4>
-        <a href="category.html?cat=0">分类一</a>
-        <a href="category.html?cat=1">分类二</a>
-        <a href="category.html?cat=2">分类三</a>
-        <a href="category.html?cat=3">分类四</a>
-      </div>
-      <div class="footer-col">
-        <h4>联系</h4>
-        <a href="contact.html">联系我们</a>
-        <a href="mailto:hello@studio.com">hello@studio.com</a>
-        <a href="#">微信公众号</a>
-        <a href="#">小红书</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span id="footerCopyright">© 2024 STUDIO. All rights reserved.</span>
-      <span id="footerICP">粤ICP备XXXXXXXX号</span>
-    </div>
-  </footer>
+  <!-- ========== 页脚（由 main.js 统一渲染，内容在后台修改） ========== -->
+  <footer class="footer" id="siteFooter"></footer>
 
   <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
