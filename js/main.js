@@ -341,7 +341,28 @@ const DEFAULT_SITE_SETTINGS = {
   contact_subtitle: '填写右侧表单，或通过以下方式直接联系我们。我们会在 24 小时内回复你。',
   footer_about: '以设计驱动创新，为品牌创造有意义的体验。',
   social_wechat: '微信公众号',
-  social_xhs: '小红书'
+  social_xhs: '小红书',
+  // —— 关于我们页 ——
+  about_hero_label: '关于我们',
+  about_hero_title: '用设计创造\n有意义的体验',
+  about_hero_image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800',
+  timeline_label: '发展历程',
+  timeline_title: '我们的成长足迹',
+  team_label: '核心团队',
+  team_title: '认识我们的团队',
+  team: [
+    { name: '张设计', role: '创始人 / 创意总监', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400' },
+    { name: '李策略', role: '策略总监', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400' },
+    { name: '王空间', role: '空间设计总监', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400' },
+    { name: '陈数字', role: '数字体验总监', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400' }
+  ],
+  values_label: '我们的价值观',
+  values_title: '我们相信什么',
+  values: [
+    { icon: '🎯', title: '以用户为中心', desc: '每一个设计决策都从用户需求出发，创造真正有价值的体验。' },
+    { icon: '💡', title: '创新驱动', desc: '不断探索新的设计方法和技术，保持对行业前沿的敏感度。' },
+    { icon: '🤝', title: '协作共赢', desc: '与客户紧密协作，将商业目标与设计美学完美结合。' }
+  ]
 };
 
 // 文本转义 + 换行转 <br>（后台填写的纯文本安全渲染）
@@ -474,6 +495,46 @@ function applySiteSettings(settings) {
   if (settings.cta_btn_text) {
     document.querySelectorAll('.cta-section .hero-btn, .cta-section .cta-btn').forEach(b => b.textContent = settings.cta_btn_text);
   }
+
+  // ===== 关于我们页 =====
+  setText('aboutHeroLabel', settings.about_hero_label);
+  setHTML('aboutHeroTitle', settings.about_hero_title);
+  const heroImg = document.getElementById('aboutHeroImage');
+  if (heroImg && settings.about_hero_image) heroImg.style.backgroundImage = `url('${settings.about_hero_image}')`;
+  setText('timelineLabel', settings.timeline_label);
+  setText('timelineTitle', settings.timeline_title);
+  setText('teamLabel', settings.team_label);
+  setText('teamTitle', settings.team_title);
+  setText('valuesLabel', settings.values_label);
+  setText('valuesTitle', settings.values_title);
+  renderTeam(settings.team);
+  renderValues(settings.values);
+}
+
+// ---------- 渲染团队成员 ----------
+function renderTeam(list) {
+  const grid = document.getElementById('teamGrid');
+  if (!grid) return;
+  const arr = Array.isArray(list) ? list : [];
+  grid.innerHTML = arr.filter(m => m && (m.name || m.avatar)).map(m => `
+    <div class="team-card">
+      <div class="team-avatar" style="background-image:url('${m.avatar || ''}')"></div>
+      <h3>${escText(m.name || '')}</h3>
+      <p>${escText(m.role || '')}</p>
+    </div>`).join('');
+}
+
+// ---------- 渲染价值观卡片 ----------
+function renderValues(list) {
+  const grid = document.getElementById('valuesGrid');
+  if (!grid) return;
+  const arr = Array.isArray(list) ? list : [];
+  grid.innerHTML = arr.filter(v => v && (v.title || v.desc)).map(v => `
+    <div class="service-card">
+      <div class="service-icon">${escText(v.icon || '')}</div>
+      <h3>${escText(v.title || '')}</h3>
+      <p>${escText(v.desc || '')}</p>
+    </div>`).join('');
 }
 
 // ---------- 统一渲染页脚（全站一致，内容后台可改）----------

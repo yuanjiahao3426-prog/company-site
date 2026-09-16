@@ -102,6 +102,8 @@ async function loadProjectsTable() {
 let coverUploader = null;   // 作品封面（单图）
 let heroUploader = null;    // 轮播大图（单图）
 let logoUploader = null;    // Logo（单图）
+let aboutHeroUploader = null; // 关于页顶部配图（单图）
+let teamUploaders = [];     // 团队成员头像上传器数组
 let uploadersInited = false;
 // 作品内容区块
 let projectBlocks = [];
@@ -112,6 +114,8 @@ function initAdminUploaders() {
   coverUploader = new ImageUploader(document.getElementById('projectCoverUploader'), { multiple: false, folder: 'projects' });
   heroUploader = new ImageUploader(document.getElementById('heroImageUploader'), { multiple: false, folder: 'hero' });
   logoUploader = new ImageUploader(document.getElementById('settingLogoUploader'), { multiple: false, folder: 'logo' });
+  const ahu = document.getElementById('settingAboutHeroUploader');
+  if (ahu) aboutHeroUploader = new ImageUploader(ahu, { multiple: false, folder: 'about' });
   uploadersInited = true;
 }
 
@@ -572,6 +576,18 @@ async function loadSettingsForm() {
   setVal('settingContactSubtitle', settings.contact_subtitle);
   // 客户列表
   renderClientsEditor(Array.isArray(settings.clients) ? settings.clients : []);
+  // 关于我们页
+  setVal('settingAboutHeroLabel', settings.about_hero_label);
+  setVal('settingAboutHeroTitle', settings.about_hero_title);
+  if (aboutHeroUploader) aboutHeroUploader.setValue(settings.about_hero_image ? [settings.about_hero_image] : []);
+  setVal('settingTimelineLabel', settings.timeline_label);
+  setVal('settingTimelineTitle', settings.timeline_title);
+  setVal('settingTeamLabel', settings.team_label);
+  setVal('settingTeamTitle', settings.team_title);
+  setVal('settingValuesLabel', settings.values_label);
+  setVal('settingValuesTitle', settings.values_title);
+  renderTeamEditor(Array.isArray(settings.team) ? settings.team : []);
+  renderValuesEditor(Array.isArray(settings.values) ? settings.values : []);
 }
 
 // ---------- 合作客户动态行 ----------
@@ -605,13 +621,112 @@ function collectClients() {
     .map(i => i.value.trim()).filter(Boolean);
 }
 
+// ---------- 团队成员动态行 ----------
+function renderTeamEditor(list) {
+  const box = document.getElementById('teamEditor');
+  if (!box) return;
+  teamUploaders = [];
+  const items = (list && list.length ? list : [{ name: '', role: '', avatar: '' }]);
+  box.innerHTML = items.map((m, i) => `
+    <div class="team-row" style="display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;">
+      <div class="team-avatar-up" style="width:140px;flex-shrink:0;"></div>
+      <div style="flex:1;display:grid;gap:8px;">
+        <input type="text" class="team-name" value="${escapeAttr(m.name || '')}" placeholder="姓名，如：张设计">
+        <input type="text" class="team-role" value="${escapeAttr(m.role || '')}" placeholder="职位，如：创始人 / 创意总监">
+      </div>
+      <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>
+    </div>`).join('');
+  // 为每行创建头像上传器
+  const rows = box.querySelectorAll('.team-row');
+  rows.forEach((row, i) => {
+    const up = new ImageUploader(row.querySelector('.team-avatar-up'), { multiple: false, folder: 'team' });
+    if (items[i] && items[i].avatar) up.setValue([items[i].avatar]);
+    row.querySelector('.btn-delete').onclick = () => { row.remove(); };
+    teamUploaders.push(up);
+  });
+}
+function addTeamRow() {
+  const box = document.getElementById('teamEditor');
+  if (!box) return;
+  const row = document.createElement('div');
+  row.className = 'team-row';
+  row.style.cssText = 'display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;';
+  row.innerHTML = `
+    <div class="team-avatar-up" style="width:140px;flex-shrink:0;"></div>
+    <div style="flex:1;display:grid;gap:8px;">
+      <input type="text" class="team-name" placeholder="姓名">
+      <input type="text" class="team-role" placeholder="职位">
+    </div>
+    <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>`;
+  row.querySelector('.btn-delete').onclick = () => row.remove();
+  box.appendChild(row);
+  const up = new ImageUploader(row.querySelector('.team-avatar-up'), { multiple: false, folder: 'team' });
+  teamUploaders.push(up);
+}
+function collectTeam() {
+  const rows = document.querySelectorAll('#teamEditor .team-row');
+  const result = [];
+  rows.forEach((row, i) => {
+    const name = row.querySelector('.team-name').value.trim();
+    const role = row.querySelector('.team-role').value.trim();
+    const avatar = teamUploaders[i] ? (teamUploaders[i].getValue()[0] || '') : '';
+    if (name || role || avatar) result.push({ name, role, avatar });
+  });
+  return result;
+}
+function teamUploadersBusy() {
+  return teamUploaders.some(u => u && u.isBusy());
+}
+
+// ---------- 价值观动态行 ----------
+function renderValuesEditor(list) {
+  const box = document.getElementById('valuesEditor');
+  if (!box) return;
+  const items = (list && list.length ? list : [{ icon: '', title: '', desc: '' }]);
+  box.innerHTML = items.map(v => `
+    <div class="value-row" style="display:flex;gap:10px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;">
+      <input type="text" class="value-icon" value="${escapeAttr(v.icon || '')}" placeholder="🎯" style="width:70px;flex-shrink:0;text-align:center;font-size:20px;">
+      <div style="flex:1;display:grid;gap:8px;">
+        <input type="text" class="value-title" value="${escapeAttr(v.title || '')}" placeholder="标题，如：以用户为中心">
+        <input type="text" class="value-desc" value="${escapeAttr(v.desc || '')}" placeholder="描述">
+      </div>
+      <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>
+    </div>`).join('');
+  box.querySelectorAll('.value-row .btn-delete').forEach(btn => {
+    btn.onclick = () => btn.closest('.value-row').remove();
+  });
+}
+function addValueRow() {
+  const box = document.getElementById('valuesEditor');
+  if (!box) return;
+  const row = document.createElement('div');
+  row.className = 'value-row';
+  row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;';
+  row.innerHTML = `
+    <input type="text" class="value-icon" placeholder="🎯" style="width:70px;flex-shrink:0;text-align:center;font-size:20px;">
+    <div style="flex:1;display:grid;gap:8px;">
+      <input type="text" class="value-title" placeholder="标题">
+      <input type="text" class="value-desc" placeholder="描述">
+    </div>
+    <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>`;
+  row.querySelector('.btn-delete').onclick = () => row.remove();
+  box.appendChild(row);
+}
+function collectValues() {
+  return Array.from(document.querySelectorAll('#valuesEditor .value-row')).map(row => ({
+    icon: row.querySelector('.value-icon').value.trim(),
+    title: row.querySelector('.value-title').value.trim(),
+    desc: row.querySelector('.value-desc').value.trim()
+  })).filter(v => v.title || v.desc || v.icon);
+}
+
 async function saveSiteSettings() {
-  if (logoUploader && logoUploader.isBusy()) {
-    alert('Logo 还在上传中，请稍候');
-    return;
-  }
+  if (logoUploader && logoUploader.isBusy()) { alert('Logo 还在上传中，请稍候'); return; }
+  if (aboutHeroUploader && aboutHeroUploader.isBusy()) { alert('关于页配图还在上传中，请稍候'); return; }
+  if (teamUploadersBusy()) { alert('团队头像还在上传中，请稍候'); return; }
   const v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
   const logoArr = logoUploader ? logoUploader.getValue() : [];
+  const heroArr = aboutHeroUploader ? aboutHeroUploader.getValue() : [];
   const settings = {
     site_name: v('settingSiteName'),
     logo_image: logoArr[0] || '',
@@ -641,6 +756,18 @@ async function saveSiteSettings() {
     contact_label: v('settingContactLabel'),
     contact_title: v('settingContactTitle'),
     contact_subtitle: v('settingContactSubtitle'),
+    // 关于我们页
+    about_hero_label: v('settingAboutHeroLabel'),
+    about_hero_title: v('settingAboutHeroTitle'),
+    about_hero_image: heroArr[0] || '',
+    timeline_label: v('settingTimelineLabel'),
+    timeline_title: v('settingTimelineTitle'),
+    team_label: v('settingTeamLabel'),
+    team_title: v('settingTeamTitle'),
+    team: collectTeam(),
+    values_label: v('settingValuesLabel'),
+    values_title: v('settingValuesTitle'),
+    values: collectValues()
   };
 
   const sb = getSupabase();

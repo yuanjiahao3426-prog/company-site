@@ -225,8 +225,68 @@
 
           <h3 style="margin-bottom:16px;font-size:16px;">关于我们 - 发展历程</h3>
           <p style="color:var(--text-gray);margin-bottom:16px;font-size:13px;">格式：每行一条，用 | 分隔年份和内容，例如：2018|工作室成立</p>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:16px;">
+            <div class="form-group">
+              <label>小标题（红色那行）</label>
+              <input type="text" id="settingTimelineLabel" placeholder="发展历程">
+            </div>
+            <div class="form-group">
+              <label>大标题</label>
+              <input type="text" id="settingTimelineTitle" placeholder="我们的成长足迹">
+            </div>
+          </div>
           <div class="form-group" style="max-width:800px;margin-bottom:32px;">
             <textarea id="settingTimeline" rows="5" placeholder="2018|工作室成立&#10;2020|业务拓展&#10;2022|数字体验部门成立"></textarea>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">关于我们 - 顶部标题区</h3>
+          <div style="display:grid;gap:16px;max-width:600px;margin-bottom:32px;">
+            <div class="form-group">
+              <label>小标题（红色那行）</label>
+              <input type="text" id="settingAboutHeroLabel" placeholder="关于我们">
+            </div>
+            <div class="form-group">
+              <label>大标题（可回车换行）</label>
+              <textarea id="settingAboutHeroTitle" rows="2" placeholder="用设计创造&#10;有意义的体验"></textarea>
+            </div>
+            <div class="form-group">
+              <label>右侧配图</label>
+              <div id="settingAboutHeroUploader"></div>
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:16px;font-size:16px;">关于我们 - 核心团队</h3>
+          <p style="color:var(--text-gray);margin-bottom:12px;font-size:13px;">每位成员：上传头像 + 填姓名 + 填职位，可随意增删。</p>
+          <div style="max-width:800px;margin-bottom:12px;">
+            <div style="display:grid;gap:16px;max-width:600px;margin-bottom:16px;">
+              <div class="form-group">
+                <label>小标题（红色那行）</label>
+                <input type="text" id="settingTeamLabel" placeholder="核心团队">
+              </div>
+              <div class="form-group">
+                <label>大标题</label>
+                <input type="text" id="settingTeamTitle" placeholder="认识我们的团队">
+              </div>
+            </div>
+            <div id="teamEditor" style="display:grid;gap:16px;margin-bottom:12px;"></div>
+            <button type="button" class="btn-edit" onclick="addTeamRow()">+ 添加成员</button>
+          </div>
+
+          <h3 style="margin:28px 0 16px;font-size:16px;">关于我们 - 价值观</h3>
+          <p style="color:var(--text-gray);margin-bottom:12px;font-size:13px;">每条：填一个图标（emoji 或文字）+ 标题 + 描述，可随意增删。</p>
+          <div style="max-width:800px;margin-bottom:32px;">
+            <div style="display:grid;gap:16px;max-width:600px;margin-bottom:16px;">
+              <div class="form-group">
+                <label>小标题（红色那行）</label>
+                <input type="text" id="settingValuesLabel" placeholder="我们的价值观">
+              </div>
+              <div class="form-group">
+                <label>大标题</label>
+                <input type="text" id="settingValuesTitle" placeholder="我们相信什么">
+              </div>
+            </div>
+            <div id="valuesEditor" style="display:grid;gap:16px;margin-bottom:12px;"></div>
+            <button type="button" class="btn-edit" onclick="addValueRow()">+ 添加价值观</button>
           </div>
 
           <button class="btn-primary" onclick="saveSiteSettings()">保存设置</button>
