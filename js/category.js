@@ -116,6 +116,7 @@ function renderMore() {
 document.addEventListener('DOMContentLoaded', async () => {
   await renderCategoryTabs();
   await loadAndRender();
+  if (typeof initReveal === 'function') initReveal();
 
   // 加载更多按钮
   const loadMoreBtn = document.getElementById('loadMoreBtn');

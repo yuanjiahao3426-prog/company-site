@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-title-suffix="页面未找到">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>页面未找到 | 广州朗格创意咨询有限公司</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .nf-wrap {
+      min-height: 78vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; padding: 120px 8% 80px;
+    }
+    .nf-code { font-size: 15px; letter-spacing: .3em; color: var(--accent); margin-bottom: 18px; }
+    .nf-title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; margin-bottom: 14px; }
+    .nf-desc { color: var(--text-gray); margin-bottom: 32px; max-width: 460px; line-height: 1.9; }
+    .nf-links { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+    .nf-links a { padding: 12px 26px; border: 1px solid var(--text-dark); border-radius: 30px; color: var(--text-dark); text-decoration: none; font-size: 14px; transition: all .25s; }
+    .nf-links a:hover { background: var(--text-dark); color: #fff; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">广州朗格创意<span>.</span></a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="category.html">作品</a>
+      <a href="about.html">关于我们</a>
+      <a href="contact.html">联系我们</a>
+    </div>
+    <button class="menu-toggle"><span></span><span></span><span></span></button>
+  </nav>
+
+  <div class="nf-wrap">
+    <div class="nf-code">404</div>
+    <h1 class="nf-title">这个页面不存在</h1>
+    <p class="nf-desc">你访问的链接可能已经变更或输入有误。可以回到首页，或直接查看我们的作品案例。</p>
+    <div class="nf-links">
+      <a href="index.html">返回首页</a>
+      <a href="category.html">查看作品</a>
+      <a href="contact.html">联系我们</a>
+    </div>
+  </div>
+
+  <footer class="footer" id="siteFooter"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -97,7 +97,8 @@ ul { list-style: none; }
   color: var(--white);
   z-index: 2;
 }
-.hero-content h1 {
+.hero-content h1,
+.hero-content h2 {
   font-size: clamp(32px, 5vw, 64px);
   font-weight: 800; line-height: 1.1;
   margin-bottom: 16px;
@@ -813,3 +814,65 @@ ul { list-style: none; }
   .pb-h1 { font-size: 22px; }
   .pb-h2 { font-size: 18px; }
 }
+
+/* ========== v7：合作客户 Logo 图片 ========== */
+.client-logo {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 64px; font-size: 20px; font-weight: 700;
+  color: var(--text-light); transition: color .3s;
+}
+.client-logo img {
+  max-width: 160px; max-height: 64px; width: auto; height: auto;
+  object-fit: contain;
+  filter: grayscale(100%) opacity(.72);
+  transition: filter .3s, transform .3s;
+}
+.client-logo:hover img { filter: none; transform: translateY(-2px); }
+.client-logo:hover { color: var(--text-dark); }
+
+/* ========== v7：手机端首屏改为竖版比例 ========== */
+@media (max-width: 768px) {
+  .hero { aspect-ratio: 4 / 5; max-height: 78vh; }
+  .hero-content { padding: 0 7%; }
+  .hero-content h1 { font-size: 30px; line-height: 1.25; }
+  .hero-content p { font-size: 14px; }
+  .hero-caption { display: none; }
+}
+
+/* ========== v7：滚动淡入 ========== */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ========== v7：点击查看大图 ========== */
+.lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.92);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; transition: opacity .25s;
+  cursor: zoom-out;
+}
+.lightbox.open { opacity: 1; visibility: visible; }
+.lightbox img { max-width: 92vw; max-height: 88vh; object-fit: contain; }
+.lightbox-close {
+  position: absolute; top: 20px; right: 24px;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: none; background: rgba(255,255,255,.16); color: #fff;
+  font-size: 24px; line-height: 1; cursor: pointer;
+}
+.lightbox-close:hover { background: rgba(255,255,255,.3); }
+.project-body img, .pb-gallery img { cursor: zoom-in; }
+
+/* ========== v7：加载占位 ========== */
+.skeleton-card {
+  border-radius: 10px; background: #f2f2f2;
+  overflow: hidden; position: relative; min-height: 120px;
+}
+.skeleton-card::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent);
+  animation: sk-shine 1.2s infinite;
+}
+@keyframes sk-shine { from { transform: translateX(-100%); } to { transform: translateX(100%); } }

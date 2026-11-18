@@ -124,9 +124,9 @@ async function loadHeroSlides() {
   try {
     const { data, error } = await sb.from('hero_slides').select('*').order('sort_order', { ascending: true });
     if (error) throw error;
-    return data && data.length ? data : getSampleHeroSlides();
+    return data && data.length ? data : [];
   } catch (e) {
-    return getSampleHeroSlides();
+    return [];
   }
 }
 
@@ -248,10 +248,12 @@ async function renderHero() {
   if (!slidesContainer) return;
 
   const slides = await loadHeroSlides();
+  if (!slides || !slides.length) return; // 无数据时保留静态第一屏（利于收录）
+
   slidesContainer.innerHTML = slides.map((s, i) => `
     <div class="hero-slide ${i === 0 ? 'active' : ''}" style="background-image:url('${s.image}')">
       <div class="hero-content">
-        <h1>${s.title}</h1>
+        ${i === 0 ? `<h1>${s.title}</h1>` : `<h2>${s.title}</h2>`}
         <p>${s.subtitle || ''}</p>
         <a href="#categories" class="hero-btn">浏览作品</a>
       </div>
@@ -301,6 +303,8 @@ async function renderFeaturedWork() {
   if (!track) return;
 
   const projects = await loadProjects();
+  if (!projects || !projects.length) return; // 无作品时保留占位，避免首页空白
+
   const html = projects.map(p => `
     <div class="work-card" onclick="location.href='detail.html?id=${p.id}'">
       <div class="work-card-img"><img src="${p.cover}" alt="${p.title}" loading="lazy"></div>
@@ -399,14 +403,11 @@ function applySiteSettings(settings) {
     el.innerHTML = `${settings.logo_text}<span>.</span>`;
   });
 
-  // 网站标题
-  if (settings.site_name) {
-    const currentTitle = document.title;
-    if (currentTitle.includes('—')) {
-      document.title = currentTitle.replace(/^[^—]+/, settings.site_name);
-    } else {
-      document.title = settings.site_name;
-    }
+  // 网站标题：静态 title 已写死公司名（利于收录），
+  // 只有后台把「站点名称」改成非默认值时，才用它重新拼标题
+  const suffix = document.documentElement.getAttribute('data-title-suffix');
+  if (settings.site_name && settings.site_name !== DEFAULT_SITE_SETTINGS.site_name) {
+    document.title = suffix ? `${settings.site_name} | ${suffix}` : settings.site_name;
   }
 
   // 网站描述
@@ -474,8 +475,17 @@ function applySiteSettings(settings) {
   const clientsGrid = document.getElementById('clientsGrid');
   if (clientsGrid) {
     const list = Array.isArray(settings.clients) ? settings.clients : [];
-    clientsGrid.innerHTML = list.filter(c => String(c).trim())
-      .map(c => `<div class="client-logo">${escText(c)}</div>`).join('');
+    clientsGrid.innerHTML = list.map(c => {
+      // 兼容两种格式：旧的纯文字字符串 / 新的 {name, logo} 对象
+      if (typeof c === 'string') {
+        return String(c).trim() ? `<div class="client-logo">${escText(c)}</div>` : '';
+      }
+      if (!c) return '';
+      if (c.logo) {
+        return `<div class="client-logo"><img src="${c.logo}" alt="${escText(c.name || '合作客户')}" loading="lazy"></div>`;
+      }
+      return String(c.name || '').trim() ? `<div class="client-logo">${escText(c.name)}</div>` : '';
+    }).join('');
   }
 
   // 首页 CTA
@@ -591,9 +601,69 @@ async function renderContactCategoryOptions() {
   sel.value = cur;
 }
 
+// ---------- 点击正文图片查看大图 ----------
+function initLightbox() {
+  if (document.getElementById('lightbox')) return;
+  const box = document.createElement('div');
+  box.id = 'lightbox';
+  box.className = 'lightbox';
+  box.innerHTML = '<button class="lightbox-close" type="button" aria-label="关闭">×</button><img alt="作品图片">';
+  document.body.appendChild(box);
+  const img = box.querySelector('img');
+
+  function close() {
+    box.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  box.addEventListener('click', (e) => {
+    if (e.target === box || e.target.classList.contains('lightbox-close')) close();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+  // 只对作品详情页正文里的图片生效，不影响列表页封面点击进详情
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t.tagName !== 'IMG') return;
+    if (!t.closest('.project-body')) return;
+    e.preventDefault();
+    img.src = t.currentSrc || t.src;
+    box.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+}
+
+// ---------- 滚动到才淡入 ----------
+function initReveal() {
+  if (!('IntersectionObserver' in window)) return;
+  const sel = '.section-title, .section-desc, .category-card, .work-card, .client-logo, .team-card, .service-card, .timeline-item, .pb-block';
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        en.target.classList.add('in');
+        io.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll(sel).forEach(el => {
+    if (el.dataset.revealed) return;
+    el.dataset.revealed = '1';
+    el.classList.add('reveal');
+    io.observe(el);
+  });
+
+  // 兜底：3 秒后仍未触发的元素直接显示，避免异常情况下页面空白
+  setTimeout(() => {
+    document.querySelectorAll('.reveal:not(.in)').forEach(el => el.classList.add('in'));
+  }, 3000);
+}
+
 // ---------- 页面初始化 ----------
 document.addEventListener('DOMContentLoaded', async () => {
   initNavbar();
+  initLightbox();
 
   // 加载并应用站点设置
   const settings = await loadSiteSettings();
@@ -601,9 +671,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderFooter(settings);
   renderContactCategoryOptions();
 
-  renderHero();
-  renderCategories();
-  renderFeaturedWork();
+  await renderHero();
+  await renderCategories();
+  await renderFeaturedWork();
+  initReveal();
 
   // 初始化粒子背景（如果页面有）
   if (document.getElementById('particles-canvas')) {

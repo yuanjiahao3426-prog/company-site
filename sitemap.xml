@@ -8,16 +8,36 @@
   <url>
     <loc>https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/category.html</loc>
     <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/category.html?cat=0</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/category.html?cat=1</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/category.html?cat=2</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/category.html?cat=3</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/about.html</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/contact.html</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 </urlset>

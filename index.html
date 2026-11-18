@@ -1,17 +1,22 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-title-suffix="商业空间设计 · 展厅展览设计 · 品牌体验设计">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>设计工作室 — 以设计驱动创新</title>
-  <meta name="description" content="专注于空间设计、产品设计、数字体验与策略咨询的全链路设计工作室。">
+  <title>广州朗格创意咨询有限公司 | 商业空间设计 · 展厅展览设计 · 品牌体验设计</title>
+  <meta name="description" content="广州朗格创意咨询有限公司，专注商业空间、企业展厅、展览展馆、品牌体验空间策划与设计，提供从空间策划、方案设计到落地跟进的一体化创意服务。">
+  <link rel="canonical" href="https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com/">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="广州朗格创意咨询有限公司 | 空间创意设计">
+  <meta property="og:description" content="专注商业空间、企业展厅、展览展馆、品牌体验空间策划与设计。">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <!-- ========== 导航栏 ========== -->
   <nav class="navbar">
-    <a href="index.html" class="logo">STUDIO<span>.</span></a>
+    <a href="index.html" class="logo">广州朗格创意<span>.</span></a>
     <div class="nav-links">
       <a href="index.html" class="active">首页</a>
       <a href="category.html">作品</a>
@@ -25,7 +30,16 @@
 
   <!-- ========== Hero 16:9 轮播 ========== -->
   <section class="hero">
-    <div class="hero-slides"></div>
+    <!-- 第一屏为静态内容，保证搜索引擎能直接读到公司信息；页面加载后由 JS 按后台设置替换 -->
+    <div class="hero-slides">
+      <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920')">
+        <div class="hero-content">
+          <h1>广州朗格创意咨询有限公司</h1>
+          <p>商业空间 · 企业展厅 · 展览展馆 · 品牌体验空间设计</p>
+          <a href="#categories" class="hero-btn">浏览作品</a>
+        </div>
+      </div>
+    </div>
     <button class="hero-arrow prev">‹</button>
     <button class="hero-arrow next">›</button>
     <div class="hero-dots"></div>
@@ -34,10 +48,42 @@
   <!-- ========== 四分类图文区块（服务概览） ========== -->
   <section class="section categories-section" id="categories">
     <div class="section-label">我们的作品</div>
-    <h2 class="section-title">四大领域，全链路设计</h2>
-    <p class="section-desc">从空间到产品，从数字到策略，点击进入对应分类查看详细案例。</p>
+    <h2 class="section-title">四大作品类别</h2>
+    <p class="section-desc">广州朗格创意咨询有限公司专注空间创意设计，点击进入对应类别查看完整案例。</p>
     <div class="categories-grid">
-      <!-- 由 JS 动态渲染 -->
+      <!-- 静态占位：数据库无内容时作为兜底，正常由 JS 渲染 -->
+      <div class="category-card">
+        <div class="category-card-img" style="background-image:url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=800')"></div>
+        <div class="category-card-overlay">
+          <div class="category-number">01</div>
+          <h3>一</h3>
+          <p>空间设计与品牌体验</p>
+        </div>
+      </div>
+      <div class="category-card">
+        <div class="category-card-img" style="background-image:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800')"></div>
+        <div class="category-card-overlay">
+          <div class="category-number">02</div>
+          <h3>二</h3>
+          <p>产品设计与工业创新</p>
+        </div>
+      </div>
+      <div class="category-card">
+        <div class="category-card-img" style="background-image:url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800')"></div>
+        <div class="category-card-overlay">
+          <div class="category-number">03</div>
+          <h3>三</h3>
+          <p>数字体验与交互设计</p>
+        </div>
+      </div>
+      <div class="category-card">
+        <div class="category-card-img" style="background-image:url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800')"></div>
+        <div class="category-card-overlay">
+          <div class="category-number">04</div>
+          <h3>四</h3>
+          <p>品牌策略与咨询服务</p>
+        </div>
+      </div>
     </div>
   </section>
 

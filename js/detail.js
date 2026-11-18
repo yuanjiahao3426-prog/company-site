@@ -116,4 +116,7 @@ async function renderProjectDetail() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', renderProjectDetail);
+document.addEventListener('DOMContentLoaded', async () => {
+  await renderProjectDetail();
+  setTimeout(() => { if (typeof initReveal === 'function') initReveal(); }, 300);
+});

@@ -13,6 +13,46 @@
 //   up.setValue([])
 // ============================================
 
+// ---------- 上传前自动压缩（大图变慢的根源在这里） ----------
+// 规则：GIF 不动（会丢帧）；小于 600KB 不动；其余最长边压到 2000px
+// PNG 仍输出 PNG（保留透明底，客户 Logo 常用透明 PNG）
+async function compressImage(file) {
+  try {
+    if (!file.type || !file.type.startsWith('image/')) return file;
+    if (file.type === 'image/gif') return file;
+    if (file.size < 600 * 1024) return file;
+    if (typeof createImageBitmap !== 'function') return file;
+
+    const bitmap = await createImageBitmap(file);
+    const max = 2000;
+    let w = bitmap.width, h = bitmap.height;
+    if (w > max || h > max) {
+      const r = Math.min(max / w, max / h);
+      w = Math.round(w * r);
+      h = Math.round(h * r);
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    if (bitmap.close) bitmap.close();
+
+    const isPng = file.type === 'image/png';
+    const blob = await new Promise(resolve =>
+      canvas.toBlob(resolve, isPng ? 'image/png' : 'image/jpeg', 0.85)
+    );
+    if (!blob || blob.size >= file.size) return file;
+
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+    const ext = isPng ? '.png' : '.jpg';
+    return new File([blob], baseName + ext, { type: isPng ? 'image/png' : 'image/jpeg' });
+  } catch (e) {
+    // 压缩失败就按原图上传，不影响流程
+    return file;
+  }
+}
+
 class ImageUploader {
   constructor(container, options) {
     this.container = container;
@@ -106,7 +146,8 @@ class ImageUploader {
     this.setDropzoneLoading(true);
 
     try {
-      const url = await uploadImageFile(file, this.opts.folder);
+      const compressed = await compressImage(file);
+      const url = await uploadImageFile(compressed, this.opts.folder);
       const idx = this.urls.indexOf(tempId);
       if (idx > -1) this.urls[idx] = url;
     } catch (err) {
