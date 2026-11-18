@@ -1,0 +1,1038 @@
+// ============================================
+// 后台管理脚本
+// ============================================
+
+let isAdmin = false;
+let currentTab = 'projects';
+
+// ---------- 登录/登出 ----------
+function adminLogin() {
+  const pwd = document.getElementById('adminPassword').value;
+  if (pwd === ADMIN_PASSWORD) {
+    isAdmin = true;
+    sessionStorage.setItem('adminLoggedIn', 'true');
+    showAdminPanel();
+  } else {
+    alert('密码错误，请重试');
+  }
+}
+
+function adminLogout() {
+  isAdmin = false;
+  sessionStorage.removeItem('adminLoggedIn');
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+function showAdminPanel() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  loadAllData();
+}
+
+// 回车登录
+document.addEventListener('DOMContentLoaded', () => {
+  // 初始化图片上传器（容器在 DOM 中一直存在，只是面板隐藏）
+  initAdminUploaders();
+
+  if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+    isAdmin = true;
+    showAdminPanel();
+  }
+  const pwdInput = document.getElementById('adminPassword');
+  if (pwdInput) {
+    pwdInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') adminLogin();
+    });
+  }
+});
+
+// ---------- 切换标签 ----------
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.admin-sidebar button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['projects', 'hero', 'categories', 'settings', 'messages'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// ---------- 加载所有数据 ----------
+async function loadAllData() {
+  await loadProjectsTable();
+  await loadHeroTable();
+  await loadCategoryInputs();
+  await loadSettingsForm();
+  await loadMessagesTable();
+}
+
+// ========== 作品管理 ==========
+async function loadProjectsTable() {
+  const tbody = document.getElementById('projectsTable');
+  const sb = getSupabase();
+  const categories = await loadCategories();
+  let projects;
+
+  if (sb) {
+    const { data, error } = await sb.from('projects').select('*').order('sort_order', { ascending: true });
+    projects = data || [];
+  } else {
+    projects = JSON.parse(localStorage.getItem('adminProjects') || 'null') || getSampleProjects();
+  }
+
+  lastProjects = projects;
+
+  if (!projects.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">还没有作品，点右上角「+ 新增作品」开始上传</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = projects.map(p => {
+    const catName = p.category_index !== undefined ? (categories[p.category_index] || '-') : '-';
+    return `
+    <tr>
+      <td><input type="checkbox" class="project-check" data-id="${p.id}" onclick="syncSelectAll()"></td>
+      <td><img src="${p.cover}" style="width:60px;height:40px;object-fit:cover;border-radius:4px;"></td>
+      <td>${p.title}</td>
+      <td>${catName}</td>
+      <td>${p.client || '-'}</td>
+      <td>${p.year || '-'}</td>
+      <td>${p.sort_order || 0}</td>
+      <td class="actions">
+        <button class="btn-edit" onclick='editProject(${JSON.stringify(p).replace(/'/g, "&#39;")})'>编辑</button>
+        <button class="btn-delete" onclick="deleteProject(${p.id})">删除</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+// ---------- 作品批量删除 ----------
+let lastProjects = [];
+
+function toggleAllProjects(box) {
+  document.querySelectorAll('.project-check').forEach(c => { c.checked = box.checked; });
+}
+
+function syncSelectAll() {
+  const all = document.querySelectorAll('.project-check');
+  const checked = document.querySelectorAll('.project-check:checked');
+  const box = document.getElementById('selectAllProjects');
+  if (box) box.checked = all.length > 0 && all.length === checked.length;
+}
+
+async function deleteSelectedProjects() {
+  const ids = Array.from(document.querySelectorAll('.project-check:checked')).map(c => c.getAttribute('data-id'));
+  if (!ids.length) { alert('请先勾选要删除的作品'); return; }
+  if (!confirm(`确定删除选中的 ${ids.length} 个作品吗？删除后不可恢复。`)) return;
+
+  const sb = getSupabase();
+  if (sb) {
+    const numericIds = ids.filter(id => !isNaN(Number(id))).map(Number);
+    if (numericIds.length) {
+      const { error } = await sb.from('projects').delete().in('id', numericIds);
+      if (error) { alert('删除失败：' + error.message); return; }
+    }
+    const otherIds = ids.filter(id => isNaN(Number(id)));
+    for (const id of otherIds) {
+      const { error } = await sb.from('projects').delete().eq('id', id);
+      if (error) { alert('删除失败：' + error.message); return; }
+    }
+  } else {
+    let arr = JSON.parse(localStorage.getItem('adminProjects') || 'null') || getSampleProjects();
+    arr = arr.filter(p => !ids.includes(String(p.id)));
+    localStorage.setItem('adminProjects', JSON.stringify(arr));
+  }
+
+  const box = document.getElementById('selectAllProjects');
+  if (box) box.checked = false;
+  await loadProjectsTable();
+}
+
+// ---------- 图片上传器实例 ----------
+let coverUploader = null;   // 作品封面（单图）
+let heroUploader = null;    // 轮播大图（单图）
+let logoUploader = null;    // Logo（单图）
+let aboutHeroUploader = null; // 关于页顶部配图（单图）
+let teamUploaders = [];     // 团队成员头像上传器数组
+let uploadersInited = false;
+// 作品内容区块
+let projectBlocks = [];
+let blockUploaders = {};    // blockId -> ImageUploader
+
+function initAdminUploaders() {
+  if (uploadersInited || typeof ImageUploader === 'undefined') return;
+  coverUploader = new ImageUploader(document.getElementById('projectCoverUploader'), { multiple: false, folder: 'projects' });
+  heroUploader = new ImageUploader(document.getElementById('heroImageUploader'), { multiple: false, folder: 'hero' });
+  logoUploader = new ImageUploader(document.getElementById('settingLogoUploader'), { multiple: false, folder: 'logo' });
+  const ahu = document.getElementById('settingAboutHeroUploader');
+  if (ahu) aboutHeroUploader = new ImageUploader(ahu, { multiple: false, folder: 'about' });
+  uploadersInited = true;
+}
+
+// ---------- 工具：转义 ----------
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function escapeAttr(str) { return escapeHtml(str); }
+
+function genBlockId() { return 'b' + Date.now() + Math.random().toString(36).slice(2, 6); }
+function newBlock(level) { return { id: genBlockId(), level: level || 'h2', heading: '', text: '', images: [] }; }
+
+// 把已有作品解析成区块（优先结构化 blocks，兼容旧 HTML content）
+function parseProjectBlocks(p) {
+  if (Array.isArray(p.blocks) && p.blocks.length) {
+    return p.blocks.map(b => ({
+      id: genBlockId(),
+      level: b.level || 'h2',
+      heading: b.heading || '',
+      text: b.text || '',
+      images: Array.isArray(b.images) ? b.images : []
+    }));
+  }
+  if (p.content && String(p.content).trim()) {
+    return [{ id: genBlockId(), level: 'html', heading: '', text: p.content, images: [] }];
+  }
+  return [newBlock('h2'), newBlock('h2')];
+}
+
+function openProjectModal() {
+  document.getElementById('projectModalTitle').textContent = '新增作品';
+  document.getElementById('projectId').value = '';
+  document.getElementById('projectTitle').value = '';
+  document.getElementById('projectSubtitle').value = '';
+  document.getElementById('projectClient').value = '';
+  document.getElementById('projectYear').value = '';
+  document.getElementById('projectCategory').value = '0';
+  document.getElementById('projectSort').value = '0';
+  coverUploader.setValue([]);
+  projectBlocks = [newBlock('h2'), newBlock('h2')];
+  blockUploaders = {};
+  renderBlocksEditor();
+  document.getElementById('projectModal').classList.add('active');
+}
+
+function editProject(p) {
+  document.getElementById('projectModalTitle').textContent = '编辑作品';
+  document.getElementById('projectId').value = p.id;
+  document.getElementById('projectTitle').value = p.title || '';
+  document.getElementById('projectSubtitle').value = p.subtitle || '';
+  coverUploader.setValue(p.cover ? [p.cover] : []);
+  document.getElementById('projectClient').value = p.client || '';
+  document.getElementById('projectYear').value = p.year || '';
+  document.getElementById('projectCategory').value = p.category_index !== undefined ? p.category_index : '0';
+  document.getElementById('projectSort').value = p.sort_order || 0;
+  projectBlocks = parseProjectBlocks(p);
+  blockUploaders = {};
+  renderBlocksEditor();
+  document.getElementById('projectModal').classList.add('active');
+}
+
+// ---------- 区块编辑器 ----------
+function blockHTML(b, idx) {
+  const sel = (v) => b.level === v ? 'selected' : '';
+  return `
+    <div class="block-item" data-block-id="${b.id}">
+      <div class="block-head">
+        <span class="block-index">区块 ${idx + 1}</span>
+        <select class="blk-level">
+          <option value="h2" ${sel('h2')}>二级标题（项目背景 / 设计策略 等）</option>
+          <option value="h1" ${sel('h1')}>一级标题</option>
+          <option value="h3" ${sel('h3')}>三级标题</option>
+          <option value="none" ${sel('none')}>无标题（只放正文或图片）</option>
+          <option value="html" ${sel('html')}>旧版 HTML（兼容老内容）</option>
+        </select>
+        <div class="block-tools">
+          <button type="button" onclick="moveBlock('${b.id}',-1)">上移</button>
+          <button type="button" onclick="moveBlock('${b.id}',1)">下移</button>
+          <button type="button" class="block-del" onclick="removeBlock('${b.id}')">删除</button>
+        </div>
+      </div>
+      <input type="text" class="blk-heading" placeholder="标题文字，如：项目背景 / 设计策略 / 空间亮点 / 空间效果（可留空）" value="${escapeAttr(b.heading)}">
+      <textarea class="blk-text" rows="3" placeholder="正文内容，按回车可分段；不需要文字就留空">${escapeAttr(b.text)}</textarea>
+      <div class="blk-images"></div>
+    </div>
+  `;
+}
+
+function renderBlocksEditor() {
+  const container = document.getElementById('blocksEditor');
+  if (!container) return;
+  blockUploaders = {};
+  if (!projectBlocks.length) {
+    container.innerHTML = '<p class="blocks-empty">还没有内容区块，点下方「添加内容区块」开始排版</p>';
+    return;
+  }
+  container.innerHTML = projectBlocks.map((b, idx) => blockHTML(b, idx)).join('');
+  projectBlocks.forEach(b => {
+    const el = container.querySelector('[data-block-id="' + b.id + '"]');
+    if (!el) return;
+    el.querySelector('.blk-level').onchange = e => { b.level = e.target.value; };
+    el.querySelector('.blk-heading').oninput = e => { b.heading = e.target.value; };
+    el.querySelector('.blk-text').oninput = e => { b.text = e.target.value; };
+    const up = new ImageUploader(el.querySelector('.blk-images'), {
+      multiple: true, max: 20, folder: 'projects', value: b.images,
+      onChange: urls => { b.images = urls; }
+    });
+    blockUploaders[b.id] = up;
+  });
+}
+
+function addBlock() {
+  projectBlocks.push(newBlock('h2'));
+  renderBlocksEditor();
+  // 滚动到最新区块
+  const container = document.getElementById('blocksEditor');
+  container.lastElementChild && container.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function removeBlock(id) {
+  projectBlocks = projectBlocks.filter(b => b.id !== id);
+  delete blockUploaders[id];
+  renderBlocksEditor();
+}
+
+function moveBlock(id, dir) {
+  const i = projectBlocks.findIndex(b => b.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= projectBlocks.length) return;
+  const tmp = projectBlocks[i]; projectBlocks[i] = projectBlocks[j]; projectBlocks[j] = tmp;
+  renderBlocksEditor();
+}
+
+function someBlockUploaderBusy() {
+  return Object.values(blockUploaders).some(u => u && u.isBusy && u.isBusy());
+}
+
+// 收集有效区块（标题/正文/图片全空的自动丢弃）
+function collectBlocks() {
+  return projectBlocks.map(b => ({
+    level: b.level || 'h2',
+    heading: (b.heading || '').trim(),
+    text: (b.text || '').trim(),
+    images: (blockUploaders[b.id] ? blockUploaders[b.id].getValue() : b.images) || []
+  })).filter(b => b.heading || b.text || (b.images && b.images.length));
+}
+
+// 把区块渲染成 HTML（同时存一份到 content，兼容旧逻辑与 SEO）
+function blocksToHtml(blocks) {
+  return blocks.map(b => {
+    if (b.level === 'html') return b.text || '';
+    let h = '';
+    if (b.heading && b.level && b.level !== 'none') {
+      h += '<' + b.level + '>' + escapeHtml(b.heading) + '</' + b.level + '>';
+    }
+    if (b.text) {
+      h += b.text.split(/\n+/).filter(Boolean).map(t => '<p>' + escapeHtml(t) + '</p>').join('');
+    }
+    if (b.images && b.images.length) {
+      h += '<div class="pb-gallery count-' + b.images.length + '">' +
+        b.images.map(s => '<figure><img src="' + s + '" alt="" loading="lazy"></figure>').join('') +
+        '</div>';
+    }
+    return h;
+  }).join('');
+}
+
+async function saveProject() {
+  const id = document.getElementById('projectId').value;
+
+  if (coverUploader.isBusy() || someBlockUploaderBusy()) {
+    alert('还有图片正在上传，请等待上传完成（缩略图正常显示）后再保存');
+    return;
+  }
+
+  const blocks = collectBlocks();
+  const coverArr = coverUploader.getValue();
+
+  const data = {
+    title: document.getElementById('projectTitle').value.trim(),
+    subtitle: document.getElementById('projectSubtitle').value.trim(),
+    cover: coverArr[0] || '',
+    client: document.getElementById('projectClient').value.trim(),
+    year: document.getElementById('projectYear').value.trim(),
+    category_index: parseInt(document.getElementById('projectCategory').value) || 0,
+    sort_order: parseInt(document.getElementById('projectSort').value) || 0,
+    blocks: blocks,
+    content: blocksToHtml(blocks)
+  };
+
+  if (!data.title) { alert('请填写作品标题（项目名称）'); return; }
+  if (!data.cover) { alert('请上传作品封面图'); return; }
+
+  const sb = getSupabase();
+  if (sb) {
+    if (id) {
+      const { error } = await sb.from('projects').update(data).eq('id', id);
+      if (error) { alert('保存失败：' + error.message); return; }
+    } else {
+      const { error } = await sb.from('projects').insert([data]);
+      if (error) { alert('新增失败：' + error.message + '\n如果提示 blocks 字段不存在，请先执行部署说明里的数据库升级 SQL'); return; }
+    }
+  } else {
+    let projects = JSON.parse(localStorage.getItem('adminProjects') || 'null') || getSampleProjects();
+    if (id) {
+      const idx = projects.findIndex(p => String(p.id) === String(id));
+      if (idx > -1) projects[idx] = { ...projects[idx], ...data };
+    } else {
+      data.id = Date.now();
+      projects.push(data);
+    }
+    localStorage.setItem('adminProjects', JSON.stringify(projects));
+  }
+
+  closeModal('projectModal');
+  await loadProjectsTable();
+}
+
+async function deleteProject(id) {
+  if (!confirm('确定删除这个作品吗？')) return;
+  const sb = getSupabase();
+  if (sb) {
+    const { error } = await sb.from('projects').delete().eq('id', id);
+    if (error) { alert('删除失败：' + error.message); return; }
+  } else {
+    let projects = JSON.parse(localStorage.getItem('adminProjects') || 'null') || getSampleProjects();
+    projects = projects.filter(p => String(p.id) !== String(id));
+    localStorage.setItem('adminProjects', JSON.stringify(projects));
+  }
+  await loadProjectsTable();
+}
+
+// ========== 首页轮播管理 ==========
+async function loadHeroTable() {
+  const tbody = document.getElementById('heroTable');
+  const sb = getSupabase();
+  let slides;
+
+  if (sb) {
+    const { data } = await sb.from('hero_slides').select('*').order('sort_order', { ascending: true });
+    slides = data || [];
+  } else {
+    slides = JSON.parse(localStorage.getItem('adminHero') || 'null') || getSampleHeroSlides();
+  }
+
+  tbody.innerHTML = slides.map(s => `
+    <tr>
+      <td><img src="${s.image}" style="width:80px;height:45px;object-fit:cover;border-radius:4px;"></td>
+      <td>${s.title}</td>
+      <td>${s.subtitle || '-'}</td>
+      <td>${s.sort_order || 0}</td>
+      <td class="actions">
+        <button class="btn-edit" onclick='editHero(${JSON.stringify(s).replace(/'/g, "&#39;")})'>编辑</button>
+        <button class="btn-delete" onclick="deleteHero(${s.id})">删除</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openHeroModal() {
+  document.getElementById('heroModalTitle').textContent = '新增轮播图';
+  document.getElementById('heroId').value = '';
+  heroUploader.setValue([]);
+  document.getElementById('heroTitle').value = '';
+  document.getElementById('heroSubtitle').value = '';
+  document.getElementById('heroCaption').value = '';
+  document.getElementById('heroSort').value = '0';
+  document.getElementById('heroModal').classList.add('active');
+}
+
+function editHero(s) {
+  document.getElementById('heroModalTitle').textContent = '编辑轮播图';
+  document.getElementById('heroId').value = s.id;
+  heroUploader.setValue(s.image ? [s.image] : []);
+  document.getElementById('heroTitle').value = s.title || '';
+  document.getElementById('heroSubtitle').value = s.subtitle || '';
+  document.getElementById('heroCaption').value = s.caption || '';
+  document.getElementById('heroSort').value = s.sort_order || 0;
+  document.getElementById('heroModal').classList.add('active');
+}
+
+async function saveHero() {
+  const id = document.getElementById('heroId').value;
+
+  if (heroUploader.isBusy()) {
+    alert('图片还在上传中，请稍候');
+    return;
+  }
+  const imgArr = heroUploader.getValue();
+
+  const data = {
+    image: imgArr[0] || '',
+    title: document.getElementById('heroTitle').value,
+    subtitle: document.getElementById('heroSubtitle').value,
+    caption: document.getElementById('heroCaption').value,
+    sort_order: parseInt(document.getElementById('heroSort').value) || 0,
+  };
+
+  if (!data.image || !data.title) {
+    alert('请上传轮播图片并填写标题');
+    return;
+  }
+
+  const sb = getSupabase();
+  if (sb) {
+    const resp = id
+      ? await sb.from('hero_slides').update(data).eq('id', id)
+      : await sb.from('hero_slides').insert([data]);
+    if (resp.error) { alert('保存失败：' + resp.error.message + '\n（若提示权限/RLS，请执行数据库修复 SQL）'); return; }
+  } else {
+    let slides = JSON.parse(localStorage.getItem('adminHero') || 'null') || getSampleHeroSlides();
+    if (id) {
+      const idx = slides.findIndex(s => String(s.id) === String(id));
+      if (idx > -1) slides[idx] = { ...slides[idx], ...data };
+    } else {
+      data.id = Date.now();
+      slides.push(data);
+    }
+    localStorage.setItem('adminHero', JSON.stringify(slides));
+  }
+
+  closeModal('heroModal');
+  await loadHeroTable();
+}
+
+async function deleteHero(id) {
+  if (!confirm('确定删除这张轮播图吗？')) return;
+  const sb = getSupabase();
+  if (sb) {
+    const { error } = await sb.from('hero_slides').delete().eq('id', id);
+    if (error) { alert('删除失败：' + error.message); return; }
+  } else {
+    let slides = JSON.parse(localStorage.getItem('adminHero') || 'null') || getSampleHeroSlides();
+    slides = slides.filter(s => String(s.id) !== String(id));
+    localStorage.setItem('adminHero', JSON.stringify(slides));
+  }
+  await loadHeroTable();
+}
+
+// ========== 分类设置 ==========
+async function loadCategoryInputs() {
+  const container = document.getElementById('categoryInputs');
+  const categories = await loadCategories();
+  container.innerHTML = categories.map((cat, i) => `
+    <div class="form-group" style="margin:0;">
+      <label>分类 ${i + 1}</label>
+      <input type="text" class="category-input" value="${cat}" data-index="${i}">
+    </div>
+  `).join('');
+}
+
+async function saveCategories() {
+  const inputs = document.querySelectorAll('.category-input');
+  const categories = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+
+  if (categories.length !== 4) {
+    alert('请填写 4 个分类名称');
+    return;
+  }
+
+  const sb = getSupabase();
+  if (sb) {
+    const { data: existing } = await sb.from('site_config').select('key').eq('key', 'categories').maybeSingle();
+    let err;
+    if (existing) {
+      ({ error: err } = await sb.from('site_config').update({ value: categories }).eq('key', 'categories'));
+    } else {
+      ({ error: err } = await sb.from('site_config').insert([{ key: 'categories', value: categories }]));
+    }
+    if (err) { alert('分类保存失败：' + err.message + '\n（请执行数据库修复 SQL 打开写入权限）'); return; }
+  } else {
+    localStorage.setItem('adminCategories', JSON.stringify(categories));
+  }
+
+  alert('分类保存成功！');
+}
+
+// ========== 咨询留言 ==========
+async function loadMessagesTable() {
+  const tbody = document.getElementById('messagesTable');
+  const sb = getSupabase();
+  const categories = await loadCategories();
+  let messages;
+
+  if (sb) {
+    const { data } = await sb.from('contact_messages').select('*').order('created_at', { ascending: false });
+    messages = data || [];
+  } else {
+    messages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+  }
+
+  if (!messages.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">暂无留言</td></tr>';
+    return;
+  }
+
+  lastMessages = messages;
+
+  tbody.innerHTML = messages.map((m, idx) => {
+    const catLabel = m.category !== undefined && m.category !== ''
+      ? (m.category === 'other' ? '其他' : (categories[parseInt(m.category)] || m.category))
+      : '-';
+    return `
+    <tr>
+      <td>${m.name || '-'}</td>
+      <td>${m.company || '-'}</td>
+      <td>${m.email || '-'}</td>
+      <td>${m.phone || '-'}</td>
+      <td>${catLabel}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${m.message || ''}">${m.message || '-'}</td>
+      <td>${m.created_at ? new Date(m.created_at).toLocaleString('zh-CN') : '-'}</td>
+      <td><button class="btn-delete" onclick="deleteMessage(${idx})">删除</button></td>
+    </tr>
+  `}).join('');
+}
+
+// ---------- 留言删除 / 导出 ----------
+let lastMessages = [];
+
+async function deleteMessage(idx) {
+  const m = lastMessages[idx];
+  if (!m) return;
+  if (!confirm('确定删除这条留言吗？删除后不可恢复。')) return;
+  const sb = getSupabase();
+  if (sb) {
+    if (m.id !== undefined && m.id !== null) {
+      const { error } = await sb.from('contact_messages').delete().eq('id', m.id);
+      if (error) { alert('删除失败：' + error.message); return; }
+    }
+  } else {
+    const arr = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+    arr.splice(idx, 1);
+    localStorage.setItem('contactMessages', JSON.stringify(arr));
+  }
+  await loadMessagesTable();
+}
+
+function exportMessages() {
+  if (!lastMessages.length) { alert('暂无留言可导出'); return; }
+  const rows = [['姓名', '公司', '邮箱', '电话', '服务', '留言内容', '提交时间']];
+  lastMessages.forEach(m => {
+    rows.push([
+      m.name || '', m.company || '', m.email || '', m.phone || '',
+      m.category === 'other' ? '其他' : (m.category ?? ''),
+      (m.message || '').replace(/\r?\n/g, ' '),
+      m.created_at ? new Date(m.created_at).toLocaleString('zh-CN') : ''
+    ]);
+  });
+  const csv = '\ufeff' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  downloadFile('客户留言.csv', csv, 'text/csv;charset=utf-8');
+}
+
+// ========== 站点设置 ==========
+// 注意：DEFAULT_SITE_SETTINGS 统一定义在 main.js，此处不再重复声明，否则会导致整个 admin.js 崩溃
+async function loadSettingsForm() {
+  const sb = getSupabase();
+  let settings;
+
+  if (sb) {
+    const { data } = await sb.from('site_config').select('value').eq('key', 'site_settings').maybeSingle();
+    settings = data?.value || DEFAULT_SITE_SETTINGS;
+  } else {
+    settings = JSON.parse(localStorage.getItem('siteSettings') || 'null') || DEFAULT_SITE_SETTINGS;
+  }
+
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+
+  setVal('settingSiteName', settings.site_name);
+  if (logoUploader) logoUploader.setValue(settings.logo_image ? [settings.logo_image] : []);
+  setVal('settingLogoText', settings.logo_text);
+  setVal('settingDescription', settings.description);
+  setVal('settingEmail', settings.email);
+  setVal('settingPhone', settings.phone);
+  setVal('settingAddress', settings.address);
+  setVal('settingHours', settings.hours);
+  setVal('settingCopyright', settings.copyright);
+  setVal('settingICP', settings.icp);
+  setVal('settingAboutIntro', settings.about_intro);
+  setVal('settingTimeline', settings.timeline);
+  // 新增全站文案
+  setVal('settingFooterAbout', settings.footer_about);
+  setVal('settingSocialWechat', settings.social_wechat);
+  setVal('settingSocialXhs', settings.social_xhs);
+  setVal('settingClientsLabel', settings.clients_label);
+  setVal('settingClientsTitle', settings.clients_title);
+  setVal('settingHomeCtaTitle', settings.home_cta_title);
+  setVal('settingHomeCtaSubtitle', settings.home_cta_subtitle);
+  setVal('settingWorkTitle', settings.work_title);
+  setVal('settingWorkSubtitle', settings.work_subtitle);
+  setVal('settingAboutCtaTitle', settings.about_cta_title);
+  setVal('settingAboutCtaSubtitle', settings.about_cta_subtitle);
+  setVal('settingContactLabel', settings.contact_label);
+  setVal('settingContactTitle', settings.contact_title);
+  setVal('settingContactSubtitle', settings.contact_subtitle);
+  // 客户列表
+  renderClientsEditor(Array.isArray(settings.clients) ? settings.clients : []);
+  // 关于我们页
+  setVal('settingAboutHeroLabel', settings.about_hero_label);
+  setVal('settingAboutHeroTitle', settings.about_hero_title);
+  if (aboutHeroUploader) aboutHeroUploader.setValue(settings.about_hero_image ? [settings.about_hero_image] : []);
+  setVal('settingTimelineLabel', settings.timeline_label);
+  setVal('settingTimelineTitle', settings.timeline_title);
+  setVal('settingTeamLabel', settings.team_label);
+  setVal('settingTeamTitle', settings.team_title);
+  setVal('settingValuesLabel', settings.values_label);
+  setVal('settingValuesTitle', settings.values_title);
+  renderTeamEditor(Array.isArray(settings.team) ? settings.team : []);
+  renderValuesEditor(Array.isArray(settings.values) ? settings.values : []);
+}
+
+// ---------- 合作客户动态行（名称 + 真实 Logo 上传） ----------
+function renderClientsEditor(list) {
+  const box = document.getElementById('clientsEditor');
+  if (!box) return;
+  const items = (list && list.length ? list : [{ name: '', logo: '' }]);
+  box.innerHTML = items.map((c, i) => {
+    const obj = typeof c === 'string' ? { name: c, logo: '' } : (c || {});
+    return `
+      <div class="client-row" style="display:flex;gap:12px;align-items:center;padding:12px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa;">
+        <div class="client-logo-up" style="width:130px;flex-shrink:0;"></div>
+        <input type="text" class="client-name" value="${escapeAttr(obj.name || '')}" placeholder="客户名称 ${i + 1}" style="flex:1;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:13.5px;">
+        <button type="button" class="btn-delete">删除</button>
+      </div>`;
+  }).join('');
+
+  box.querySelectorAll('.client-row').forEach((row, i) => {
+    const c = items[i];
+    const obj = typeof c === 'string' ? { name: c, logo: '' } : (c || {});
+    const up = new ImageUploader(row.querySelector('.client-logo-up'), {
+      multiple: false,
+      folder: 'logos',
+      value: obj.logo ? [obj.logo] : []
+    });
+    row._uploader = up;
+    row.querySelector('.btn-delete').onclick = () => removeClientRow(row.querySelector('.btn-delete'));
+  });
+}
+
+function addClientRow() {
+  const box = document.getElementById('clientsEditor');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.className = 'client-row';
+  div.style.cssText = 'display:flex;gap:12px;align-items:center;padding:12px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa;';
+  div.innerHTML = `
+    <div class="client-logo-up" style="width:130px;flex-shrink:0;"></div>
+    <input type="text" class="client-name" placeholder="客户名称" style="flex:1;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:13.5px;">
+    <button type="button" class="btn-delete">删除</button>`;
+  box.appendChild(div);
+  div._uploader = new ImageUploader(div.querySelector('.client-logo-up'), {
+    multiple: false,
+    folder: 'logos',
+    value: []
+  });
+  div.querySelector('.btn-delete').onclick = () => removeClientRow(div.querySelector('.btn-delete'));
+  div.querySelector('.client-name').focus();
+}
+
+function removeClientRow(btn) {
+  const box = document.getElementById('clientsEditor');
+  btn.closest('.client-row').remove();
+  if (!box.querySelectorAll('.client-row').length) addClientRow();
+}
+
+function collectClients() {
+  return Array.from(document.querySelectorAll('#clientsEditor .client-row'))
+    .map(row => {
+      const nameEl = row.querySelector('.client-name');
+      const name = nameEl ? nameEl.value.trim() : '';
+      const logo = (row._uploader && row._uploader.getValue()[0]) || '';
+      return { name, logo };
+    })
+    .filter(c => c.name || c.logo);
+}
+
+function clientUploadersBusy() {
+  return Array.from(document.querySelectorAll('#clientsEditor .client-row'))
+    .some(row => row._uploader && row._uploader.isBusy());
+}
+
+// ---------- 团队成员动态行 ----------
+function renderTeamEditor(list) {
+  const box = document.getElementById('teamEditor');
+  if (!box) return;
+  teamUploaders = [];
+  const items = (list && list.length ? list : [{ name: '', role: '', avatar: '' }]);
+  box.innerHTML = items.map((m, i) => `
+    <div class="team-row" style="display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;">
+      <div class="team-avatar-up" style="width:140px;flex-shrink:0;"></div>
+      <div style="flex:1;display:grid;gap:8px;">
+        <input type="text" class="team-name" value="${escapeAttr(m.name || '')}" placeholder="姓名，如：张设计">
+        <input type="text" class="team-role" value="${escapeAttr(m.role || '')}" placeholder="职位，如：创始人 / 创意总监">
+      </div>
+      <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>
+    </div>`).join('');
+  // 为每行创建头像上传器
+  const rows = box.querySelectorAll('.team-row');
+  rows.forEach((row, i) => {
+    const up = new ImageUploader(row.querySelector('.team-avatar-up'), { multiple: false, folder: 'team' });
+    if (items[i] && items[i].avatar) up.setValue([items[i].avatar]);
+    row.querySelector('.btn-delete').onclick = () => { row.remove(); };
+    teamUploaders.push(up);
+  });
+}
+function addTeamRow() {
+  const box = document.getElementById('teamEditor');
+  if (!box) return;
+  const row = document.createElement('div');
+  row.className = 'team-row';
+  row.style.cssText = 'display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;';
+  row.innerHTML = `
+    <div class="team-avatar-up" style="width:140px;flex-shrink:0;"></div>
+    <div style="flex:1;display:grid;gap:8px;">
+      <input type="text" class="team-name" placeholder="姓名">
+      <input type="text" class="team-role" placeholder="职位">
+    </div>
+    <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>`;
+  row.querySelector('.btn-delete').onclick = () => row.remove();
+  box.appendChild(row);
+  const up = new ImageUploader(row.querySelector('.team-avatar-up'), { multiple: false, folder: 'team' });
+  teamUploaders.push(up);
+}
+function collectTeam() {
+  const rows = document.querySelectorAll('#teamEditor .team-row');
+  const result = [];
+  rows.forEach((row, i) => {
+    const name = row.querySelector('.team-name').value.trim();
+    const role = row.querySelector('.team-role').value.trim();
+    const avatar = teamUploaders[i] ? (teamUploaders[i].getValue()[0] || '') : '';
+    if (name || role || avatar) result.push({ name, role, avatar });
+  });
+  return result;
+}
+function teamUploadersBusy() {
+  return teamUploaders.some(u => u && u.isBusy());
+}
+
+// ---------- 价值观动态行 ----------
+function renderValuesEditor(list) {
+  const box = document.getElementById('valuesEditor');
+  if (!box) return;
+  const items = (list && list.length ? list : [{ icon: '', title: '', desc: '' }]);
+  box.innerHTML = items.map(v => `
+    <div class="value-row" style="display:flex;gap:10px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;">
+      <input type="text" class="value-icon" value="${escapeAttr(v.icon || '')}" placeholder="🎯" style="width:70px;flex-shrink:0;text-align:center;font-size:20px;">
+      <div style="flex:1;display:grid;gap:8px;">
+        <input type="text" class="value-title" value="${escapeAttr(v.title || '')}" placeholder="标题，如：以用户为中心">
+        <input type="text" class="value-desc" value="${escapeAttr(v.desc || '')}" placeholder="描述">
+      </div>
+      <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>
+    </div>`).join('');
+  box.querySelectorAll('.value-row .btn-delete').forEach(btn => {
+    btn.onclick = () => btn.closest('.value-row').remove();
+  });
+}
+function addValueRow() {
+  const box = document.getElementById('valuesEditor');
+  if (!box) return;
+  const row = document.createElement('div');
+  row.className = 'value-row';
+  row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;padding:14px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa;';
+  row.innerHTML = `
+    <input type="text" class="value-icon" placeholder="🎯" style="width:70px;flex-shrink:0;text-align:center;font-size:20px;">
+    <div style="flex:1;display:grid;gap:8px;">
+      <input type="text" class="value-title" placeholder="标题">
+      <input type="text" class="value-desc" placeholder="描述">
+    </div>
+    <button type="button" class="btn-delete" style="flex-shrink:0;">删除</button>`;
+  row.querySelector('.btn-delete').onclick = () => row.remove();
+  box.appendChild(row);
+}
+function collectValues() {
+  return Array.from(document.querySelectorAll('#valuesEditor .value-row')).map(row => ({
+    icon: row.querySelector('.value-icon').value.trim(),
+    title: row.querySelector('.value-title').value.trim(),
+    desc: row.querySelector('.value-desc').value.trim()
+  })).filter(v => v.title || v.desc || v.icon);
+}
+
+async function saveSiteSettings() {
+  if (logoUploader && logoUploader.isBusy()) { alert('Logo 还在上传中，请稍候'); return; }
+  if (aboutHeroUploader && aboutHeroUploader.isBusy()) { alert('关于页配图还在上传中，请稍候'); return; }
+  if (teamUploadersBusy()) { alert('团队头像还在上传中，请稍候'); return; }
+  if (clientUploadersBusy()) { alert('客户 Logo 还在上传中，请稍候'); return; }
+  const v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const logoArr = logoUploader ? logoUploader.getValue() : [];
+  const heroArr = aboutHeroUploader ? aboutHeroUploader.getValue() : [];
+  const settings = {
+    site_name: v('settingSiteName'),
+    logo_image: logoArr[0] || '',
+    logo_text: v('settingLogoText'),
+    description: v('settingDescription'),
+    email: v('settingEmail'),
+    phone: v('settingPhone'),
+    address: v('settingAddress'),
+    hours: v('settingHours'),
+    copyright: v('settingCopyright'),
+    icp: v('settingICP'),
+    about_intro: v('settingAboutIntro'),
+    timeline: v('settingTimeline'),
+    // 全站文案
+    footer_about: v('settingFooterAbout'),
+    social_wechat: v('settingSocialWechat'),
+    social_xhs: v('settingSocialXhs'),
+    clients_label: v('settingClientsLabel'),
+    clients_title: v('settingClientsTitle'),
+    clients: collectClients(),
+    home_cta_title: v('settingHomeCtaTitle'),
+    home_cta_subtitle: v('settingHomeCtaSubtitle'),
+    work_title: v('settingWorkTitle'),
+    work_subtitle: v('settingWorkSubtitle'),
+    about_cta_title: v('settingAboutCtaTitle'),
+    about_cta_subtitle: v('settingAboutCtaSubtitle'),
+    contact_label: v('settingContactLabel'),
+    contact_title: v('settingContactTitle'),
+    contact_subtitle: v('settingContactSubtitle'),
+    // 关于我们页
+    about_hero_label: v('settingAboutHeroLabel'),
+    about_hero_title: v('settingAboutHeroTitle'),
+    about_hero_image: heroArr[0] || '',
+    timeline_label: v('settingTimelineLabel'),
+    timeline_title: v('settingTimelineTitle'),
+    team_label: v('settingTeamLabel'),
+    team_title: v('settingTeamTitle'),
+    team: collectTeam(),
+    values_label: v('settingValuesLabel'),
+    values_title: v('settingValuesTitle'),
+    values: collectValues()
+  };
+
+  const sb = getSupabase();
+  if (sb) {
+    const { data: existing } = await sb.from('site_config').select('key').eq('key', 'site_settings').maybeSingle();
+    let err;
+    if (existing) {
+      ({ error: err } = await sb.from('site_config').update({ value: settings }).eq('key', 'site_settings'));
+    } else {
+      ({ error: err } = await sb.from('site_config').insert([{ key: 'site_settings', value: settings }]));
+    }
+    if (err) { alert('站点设置保存失败：' + err.message + '\n（请执行数据库修复 SQL 打开写入权限）'); return; }
+  } else {
+    localStorage.setItem('siteSettings', JSON.stringify(settings));
+  }
+
+  alert('站点设置保存成功！刷新前台页面即可看到效果。');
+}
+
+// ---------- 关闭弹窗 ----------
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// 点击弹窗背景关闭
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// ========== v7 新增：预览、sitemap、数据备份 ==========
+const SITE_ORIGIN = 'https://www.xn--55q8pg0ccuh17au1aj5k01ord06kjs4mqf0a.com';
+
+function previewSite() {
+  window.open('index.html', '_blank');
+}
+
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1200);
+}
+
+function xmlEscape(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function todayStr() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+async function generateSitemap() {
+  const sb = getSupabase();
+  let projects = [];
+  let categories = DEFAULT_CATEGORIES;
+
+  try {
+    categories = await loadCategories();
+    if (sb) {
+      const { data } = await sb.from('projects').select('id,title').order('sort_order', { ascending: true });
+      projects = data || [];
+    } else {
+      projects = JSON.parse(localStorage.getItem('adminProjects') || 'null') || [];
+    }
+  } catch (e) {
+    projects = [];
+  }
+
+  const today = todayStr();
+  const urls = [
+    { loc: `${SITE_ORIGIN}/`, priority: '1.0', changefreq: 'weekly' },
+    { loc: `${SITE_ORIGIN}/category.html`, priority: '0.9', changefreq: 'weekly' },
+    { loc: `${SITE_ORIGIN}/about.html`, priority: '0.7', changefreq: 'monthly' },
+    { loc: `${SITE_ORIGIN}/contact.html`, priority: '0.7', changefreq: 'monthly' }
+  ];
+
+  categories.forEach((_, i) => {
+    urls.push({ loc: `${SITE_ORIGIN}/category.html?cat=${i}`, priority: '0.8', changefreq: 'weekly' });
+  });
+
+  projects.forEach(p => {
+    urls.push({ loc: `${SITE_ORIGIN}/detail.html?id=${encodeURIComponent(p.id)}`, priority: '0.6', changefreq: 'monthly' });
+  });
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(u => `  <url>
+    <loc>${xmlEscape(u.loc)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`).join('\n')}
+</urlset>
+`;
+  downloadFile('sitemap.xml', xml, 'application/xml;charset=utf-8');
+  setTimeout(() => {
+    alert(`已生成 sitemap.xml，共 ${urls.length} 个链接。\n\n下一步：把下载的文件覆盖 GitHub 仓库根目录的 sitemap.xml，提交后等 EdgeOne 自动部署。`);
+  }, 600);
+}
+
+async function exportBackup() {
+  const sb = getSupabase();
+  const data = { exported_at: new Date().toISOString(), projects: [], hero_slides: [], site_config: null, contact_messages: [] };
+
+  if (sb) {
+    try {
+      const p = await sb.from('projects').select('*');
+      const h = await sb.from('hero_slides').select('*');
+      const s = await sb.from('site_config').select('*');
+      const m = await sb.from('contact_messages').select('*');
+      data.projects = p.data || [];
+      data.hero_slides = h.data || [];
+      data.site_config = s.data || [];
+      data.contact_messages = m.data || [];
+    } catch (e) {
+      alert('导出失败：' + (e.message || e));
+      return;
+    }
+  } else {
+    data.projects = JSON.parse(localStorage.getItem('adminProjects') || '[]');
+    data.hero_slides = JSON.parse(localStorage.getItem('adminHeroSlides') || '[]');
+    data.site_config = [{ key: 'site_settings', value: JSON.parse(localStorage.getItem('siteSettings') || '{}') }];
+    data.contact_messages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+  }
+
+  const name = `朗格官网备份-${todayStr()}.json`;
+  downloadFile(name, JSON.stringify(data, null, 2), 'application/json;charset=utf-8');
+  setTimeout(() => alert('备份已下载，建议存到电脑或网盘，每月备份一次。'), 600);
+}
